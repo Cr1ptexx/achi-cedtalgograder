@@ -1,0 +1,157 @@
+import { Link, useParams } from 'react-router-dom';
+import { lazy, Suspense, useEffect, useState } from 'react';
+import { chapterBySlug } from '../data/chapters';
+import { catalog, GRADER_BASE } from '../data/catalog';
+import { problemByCode } from '../data/problems';
+import type { ChapterSlug } from '../data/types';
+import Quiz from '../components/Quiz';
+import { getStatus, useProgressVersion } from '../store/progress';
+import StatusDot from '../components/StatusDot';
+import { DifficultyBadge, WorthStars } from '../components/Difficulty';
+import { ratingOf } from '../data/ratings';
+
+const viz = {
+  permutation: lazy(() => import('../components/PermutationViz')),
+  sorting: lazy(() => import('../components/SortingViz')),
+};
+
+// The five zones are a study sequence, so they are numbered.
+const ZONES = [
+  ['concept', 'แนวคิด'],
+  ['play', 'ลองเล่น'],
+  ['quiz', 'เช็กความเข้าใจ'],
+  ['cost', 'ความซับซ้อน'],
+  ['problems', 'โจทย์แนะนำ'],
+] as const;
+
+export default function ChapterPage() {
+  const { slug } = useParams();
+  const ch = chapterBySlug.get(slug as ChapterSlug);
+  const [zone, setZone] = useState<string>('concept');
+  useProgressVersion();
+
+  useEffect(() => {
+    const els = ZONES.map(([id]) => document.getElementById(id)).filter(Boolean) as HTMLElement[];
+    const io = new IntersectionObserver(
+      (entries) => entries.forEach((e) => e.isIntersecting && setZone(e.target.id)),
+      { rootMargin: '-35% 0px -60% 0px' },
+    );
+    els.forEach((el) => io.observe(el));
+    return () => io.disconnect();
+  }, [slug]);
+
+  if (!ch) return <p>ไม่พบบทนี้ <Link to="/">กลับหน้าแรก</Link></p>;
+  const probs = catalog.filter((p) => p.chapter === ch.slug);
+
+  if (!ch.ready) {
+    return (
+      <>
+        <ChapterHead num={ch.num} title={ch.title} thai={ch.thaiTitle} blurb={ch.blurb} />
+        <ProblemList probs={probs} />
+      </>
+    );
+  }
+  const Viz = ch.visualizer ? viz[ch.visualizer] : null;
+
+  return (
+    <>
+      <ChapterHead num={ch.num} title={ch.title} thai={ch.thaiTitle} blurb={ch.blurb} />
+      <div className="ch-layout">
+        <nav className="rail" aria-label="ส่วนของบทเรียน">
+          {ZONES.map(([id, label], k) => (
+            <a key={id} href={`#${id}`} className={zone === id ? 'on' : ''} aria-current={zone === id ? 'true' : undefined}
+              onClick={(e) => { e.preventDefault(); document.getElementById(id)?.scrollIntoView({ behavior: 'smooth' }); }}>
+              <span className="zone-k">{k + 1}</span>{label}
+            </a>
+          ))}
+        </nav>
+
+        <div>
+          <section id="concept" className="zone">
+            <h2><span className="zone-k">1</span>แนวคิด</h2>
+            <div className="notes">
+              <div className="note-grid">
+                {ch.concepts.map((c, k) => (
+                  <article key={c.title} className="note-item">
+                    <span className="n">{k + 1}</span>
+                    <h3>{c.title}</h3>
+                    <p>{c.body}</p>
+                    {c.code && <pre className="code">{c.code}</pre>}
+                  </article>
+                ))}
+              </div>
+            </div>
+          </section>
+
+          <section id="play" className="zone">
+            <h2><span className="zone-k">2</span>ลองเล่น</h2>
+            <p className="zone-intro">กดทีละขั้นแล้วดูบรรทัดที่ไฮไลต์ในโค้ดด้านขวา ว่าตอนนี้โปรแกรมทำอะไรอยู่</p>
+            <div className="card">{Viz && <Suspense fallback={<p className="muted">กำลังโหลดตัวจำลอง…</p>}><Viz /></Suspense>}</div>
+          </section>
+
+          <section id="quiz" className="zone">
+            <h2><span className="zone-k">3</span>เช็กความเข้าใจ</h2>
+            <Quiz items={ch.quiz} />
+          </section>
+
+          <section id="cost" className="zone">
+            <h2><span className="zone-k">4</span>ความซับซ้อนและจุดที่มักพลาด</h2>
+            <div className="two-col">
+              <table className="table">
+                <thead><tr><th>แบบ</th><th>เวลา</th><th>หมายเหตุ</th></tr></thead>
+                <tbody>{ch.complexity.map((r) => <tr key={r.name}><td>{r.name}</td><td className="mono small">{r.time}</td><td className="muted small">{r.note}</td></tr>)}</tbody>
+              </table>
+              <ul className="pitfalls">{ch.pitfalls.map((p) => <li key={p}>{p}</li>)}</ul>
+            </div>
+          </section>
+
+          <section id="problems" className="zone">
+            <h2><span className="zone-k">5</span>โจทย์แนะนำ</h2>
+            <ProblemList probs={probs} />
+          </section>
+        </div>
+      </div>
+    </>
+  );
+}
+
+function ChapterHead({ num, title, thai, blurb }: { num: string; title: string; thai: string; blurb: string }) {
+  return (
+    <header className="ch-head">
+      <Link to="/" className="back">ทุกบท</Link>
+      <div className="ch-head-row">
+        <span className="ch-num big">{num}</span>
+        <div><h1>{title}</h1><div className="muted">{thai}</div></div>
+      </div>
+      <p>{blurb}</p>
+    </header>
+  );
+}
+
+function ProblemList({ probs }: { probs: typeof catalog }) {
+  return (
+    <div className="prob-list">
+      {probs.map((p) => {
+        const built = problemByCode.get(p.code);
+        const info = (
+          <>
+            <StatusDot status={getStatus(p.code)} />
+            <div className="grow"><div className="prob-title">{p.title}</div><div className="muted small">{ratingOf(p.code)?.source ?? p.code}</div></div>
+            <div className="prob-rate"><DifficultyBadge code={p.code} /><WorthStars code={p.code} /></div>
+          </>
+        );
+        return built ? (
+          <Link key={p.code} to={`/p/${p.code}`} className="card prob-row">
+            {info}
+            <span className="go">เขียนโค้ด</span>
+          </Link>
+        ) : (
+          <a key={p.code} href={`${GRADER_BASE}/main/list`} target="_blank" rel="noreferrer" className="card prob-row ext">
+            {info}
+            <span className="small muted">ทำบน grader ↗</span>
+          </a>
+        );
+      })}
+    </div>
+  );
+}
