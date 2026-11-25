@@ -31,17 +31,11 @@ export default function PlanPage() {
   return (
     <>
       <header className="ch-head">
-        <h1>แผนการเรียน Algorithm</h1>
+        <h1>โจทย์ทั้งหมด</h1>
         <p>รวมโจทย์ algorithm ทุกข้อบน grader พร้อมระดับความยากและความน่าทำ ข้อที่มีป้าย "ทำในเว็บได้" เขียนและตรวจได้ที่นี่</p>
-        <div className="plan-stats">
-          <div className="stat"><b>{solved}</b><span>ผ่านแล้ว</span></div>
-          <div className="stat"><b>{tried}</b><span>ลองแล้ว</span></div>
-          <div className="stat"><b>{total - solved - tried}</b><span>ยังไม่ทำ</span></div>
-          <div className="stat" title="ข้อ LeetCode ที่ติ๊กว่าทำแล้ว (ติ๊กเองในหน้าบทเรียน)"><b>{lcDone}<small className="muted">/{lcAll.length}</small></b><span>LeetCode</span></div>
-          <div className="grow">
-            <div className="progress big"><div style={{ width: `${(solved / total) * 100}%` }} /></div>
-            <div className="small muted">ผ่าน {Math.round((solved / total) * 100)}% ของ {total} ข้อ</div>
-          </div>
+        <div className="plan-sum">
+          <div className="progress big grow"><div style={{ width: `${(solved / total) * 100}%` }} /></div>
+          <span className="small muted">ผ่าน {solved} · ลองแล้ว {tried} · ยังไม่ทำ {total - solved - tried} จาก {total} ข้อ · LeetCode {lcDone}/{lcAll.length}</span>
         </div>
 
         <div className="filters">

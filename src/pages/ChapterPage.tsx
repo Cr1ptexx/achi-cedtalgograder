@@ -1,6 +1,6 @@
 import { Link, useParams } from 'react-router-dom';
 import { lazy, Suspense, useEffect, useState } from 'react';
-import { chapterBySlug } from '../data/chapters';
+import { chapterBySlug, chapters } from '../data/chapters';
 import { catalog, GRADER_BASE } from '../data/catalog';
 import { problemByCode } from '../data/problems';
 import type { ChapterSlug } from '../data/types';
@@ -53,6 +53,8 @@ export default function ChapterPage() {
   if (!ch) return <p>ไม่พบบทนี้ <Link to="/">กลับหน้าแรก</Link></p>;
   const probs = catalog.filter((p) => p.chapter === ch.slug);
   const lc = leetcodeByChapter[ch.slug] ?? [];
+  const ci = chapters.findIndex((c) => c.slug === ch.slug);
+  const prevCh = chapters[ci - 1], nextCh = chapters[ci + 1];
   const zones = lc.length ? ZONES : ZONES.slice(0, -1);
 
   if (!ch.ready) {
@@ -131,6 +133,11 @@ export default function ChapterPage() {
               </div>
             </section>
           )}
+
+          <nav className="ch-pager" aria-label="ไปบทอื่น">
+            {prevCh ? <Link to={`/ch/${prevCh.slug}`}>← บท {prevCh.num} {prevCh.title}</Link> : <span />}
+            {nextCh ? <Link to={`/ch/${nextCh.slug}`} className="next">บท {nextCh.num} {nextCh.title} →</Link> : <Link to="/exam" className="next">ไปเส้นทางสอบ →</Link>}
+          </nav>
         </div>
       </div>
     </>

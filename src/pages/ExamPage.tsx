@@ -4,7 +4,6 @@ import { chapters } from '../data/chapters';
 import { BIGO_CHOICES, BIGO_DRILLS, BIGO_FORMULAS, type Drill } from '../data/bigo-drills';
 import { dateLabel, drillKey, EXAMS, graderStages, PICKS_PER_CHAPTER, reviewKey, type ExamId } from '../data/exams';
 import ExamCard from '../components/ExamCard';
-import DayStrip from '../components/DayStrip';
 import { getFlag, getStatus, logEvent, setFlag, useProgressVersion } from '../store/progress';
 import { problemByCode } from '../data/problems';
 import StatusDot from '../components/StatusDot';
@@ -29,7 +28,6 @@ export default function ExamPage() {
         ))}
       </div>
 
-      <DayStrip active={tab} />
       <div className="exam-ticket"><ExamCard id={tab} link={false} /></div>
 
       {tab === 'grader' ? <GraderPath /> : <PaperPath />}
@@ -48,7 +46,7 @@ function GraderPath() {
       )}
       <p className="muted">
         เรียงตามบทของวิชา แต่ละบทเลือก {PICKS_PER_CHAPTER} ข้อที่น่าทำที่สุด (ดาวมากสุด แล้วดูจำนวนเพื่อนที่ฝึกประกอบ) เรียงจากง่ายไปยาก ท้ายสุดคือข้อสอบปลายภาคเก่าไว้ซ้อมจริง
-        ข้ออื่นทำเพิ่มได้ที่ <Link to="/plan">แผนการเรียน</Link>
+        ข้ออื่นทำเพิ่มได้ที่ <Link to="/plan">โจทย์ทั้งหมด</Link>
       </p>
       <ol className="stage-list">
         {stages.map((s) => {

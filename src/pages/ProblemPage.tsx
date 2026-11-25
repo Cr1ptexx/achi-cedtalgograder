@@ -4,7 +4,7 @@ import CodeMirror from '@uiw/react-codemirror';
 import { cpp } from '@codemirror/lang-cpp';
 import { problemByCode } from '../data/problems';
 import { chapterBySlug } from '../data/chapters';
-import { GRADER_BASE } from '../data/catalog';
+import { catalog, GRADER_BASE } from '../data/catalog';
 import { runner, type Checker, type TestCase, type TestResult } from '../runner/cppRunner';
 import type { TestFile } from '../data/types';
 import { loadCode, markResult, saveCode } from '../store/progress';
@@ -123,12 +123,16 @@ export default function ProblemPage() {
     return () => window.removeEventListener('keydown', h, true);
   }, []);
 
-  if (!p) return <p>ไม่พบโจทย์นี้ <Link to="/plan">ไปหน้าแผนการเรียน</Link></p>;
+  if (!p) return <p>ไม่พบโจทย์นี้ <Link to="/plan">ไปหน้าโจทย์ทั้งหมด</Link></p>;
   // the exam set has no chapter page of its own; it lives on the plan page
   const ch = chapterBySlug.get(p.chapter);
   const back = ch
     ? { to: `/ch/${ch.slug}`, label: `บท ${ch.num} ${ch.title}` }
-    : { to: '/plan', label: 'ข้อสอบปลายภาคเก่า (แผนการเรียน)' };
+    : { to: '/plan', label: 'ข้อสอบปลายภาคเก่า' };
+
+  // next problem in the same chapter, so you can keep going without going back to a list
+  const sibs = catalog.filter((x) => x.chapter === p.chapter);
+  const nextProb = sibs[sibs.findIndex((x) => x.code === p.code) + 1];
 
   const onChange = (v: string) => {
     setSrc(v);
@@ -148,6 +152,7 @@ export default function ProblemPage() {
         <div className="meta-row">
           <span className="muted small">{p.code}</span>
           <a className="small" href={`${GRADER_BASE}/main/list`} target="_blank" rel="noreferrer">เปิดบน grader ↗</a>
+          {nextProb && <Link className="small" to={`/p/${nextProb.code}`}>ข้อถัดไป: {nextProb.title} →</Link>}
         </div>
         <RatingLine code={p.code} />
 

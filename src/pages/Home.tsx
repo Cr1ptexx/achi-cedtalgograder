@@ -1,19 +1,15 @@
 import { Link } from 'react-router-dom';
 import { chapters } from '../data/chapters';
 import { catalog } from '../data/catalog';
-import { leetcodeByChapter } from '../data/leetcode';
-import { getStatus, isLcDone, useProgressVersion } from '../store/progress';
+import { summary } from '../store/stats';
+import { rankName, XP_PER_LEVEL } from '../store/stats';
+import WeekStrip from '../components/WeekStrip';
+import { getStatus, useProgressVersion } from '../store/progress';
 import ExamCard from '../components/ExamCard';
-import DayStrip from '../components/DayStrip';
-import ChapterSegments from '../components/ChapterSegments';
 
 export default function Home() {
   useProgressVersion();
-  const total = catalog.length;
-  const solved = catalog.filter((p) => getStatus(p.code) === 'solved').length;
-  const tried = catalog.filter((p) => getStatus(p.code) === 'tried').length;
-  const lcAll = Object.values(leetcodeByChapter).flat();
-  const lcDone = lcAll.filter((x) => isLcDone(x.slug)).length;
+  const { solved, tried, total, lcDone, lcTotal, xp, level, into, streak, week } = summary();
   const next = chapters.find((c) => c.ready && catalog.some((p) => p.chapter === c.slug && getStatus(p.code) !== 'solved')) ?? chapters[0];
 
   return (
@@ -22,8 +18,6 @@ export default function Home() {
         <h1>Algo Lab</h1>
         <p>เว็บฝึกวิชา Algorithm สรุปแนวคิดทีละบท มีตัวจำลองให้กดดู และโจทย์ C++ ที่เขียนกับตรวจได้ในหน้าเว็บ</p>
 
-        <DayStrip />
-
         <div className="hero-board">
           <div className="hero-tickets">
             <ExamCard id="grader" />
@@ -31,8 +25,15 @@ export default function Home() {
           </div>
           <div className="card hero-progress">
             <div className="hero-count"><b>{solved}</b><span>จาก {total} ข้อผ่านแล้ว</span></div>
-            <ChapterSegments />
-            <div className="small muted">ลองแล้ว {tried} ข้อ · ยังไม่ทำ {total - solved - tried} ข้อ · LeetCode {lcDone}/{lcAll.length}</div>
+            <div className="lvl-line">
+              <div className="lvl-line-h"><b>เลเวล {level}</b> <span className="muted small">{rankName(level)} · {xp} XP</span></div>
+              <div className="progress" role="progressbar" aria-valuenow={into} aria-valuemin={0} aria-valuemax={XP_PER_LEVEL} aria-label="ไปเลเวลถัดไป"><div style={{ width: `${into}%` }} /></div>
+            </div>
+            <div className="wk-row">
+              <WeekStrip week={week} />
+              <span className="small muted">{streak > 0 ? `ฝึกต่อเนื่อง ${streak} วัน` : 'ยังไม่ได้ฝึกวันนี้'}</span>
+            </div>
+            <div className="small muted">ลองแล้ว {tried} ข้อ · ยังไม่ทำ {total - solved - tried} ข้อ · LeetCode {lcDone}/{lcTotal}</div>
             <Link className="btn primary" to={`/ch/${next.slug}`}>
               {solved > 0 ? `เรียนต่อ: บท ${next.num} ${next.title}` : 'เริ่มบทแรก'}
             </Link>

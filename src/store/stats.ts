@@ -1,4 +1,8 @@
 import type { LogEntry, LogKind } from './progress';
+import { catalog } from '../data/catalog';
+import { leetcodeByChapter } from '../data/leetcode';
+import { ratingOf } from '../data/ratings';
+import { getLog, getStatus, isLcDone } from './progress';
 
 export const pad = (n: number) => String(n).padStart(2, '0');
 /** local calendar day, e.g. 2026-11-25 */
@@ -51,17 +55,27 @@ export function rankName(level: number): string {
   return 'ปรมาจารย์';
 }
 
-/** Fake activity for the "preview" toggle: deterministic, last ~26 weeks. */
-export function demoLog(now = Date.now()): LogEntry[] {
-  let s = 12345;
-  const rnd = () => { s = (s * 1103515245 + 12345) & 0x7fffffff; return s / 0x7fffffff; };
-  const out: LogEntry[] = [];
-  const kinds: LogKind[] = ['sub', 'sub', 'ac', 'ac', 'lc', 'quiz'];
-  for (let back = 0; back < 180; back++) {
-    const burst = back < 9 ? 0.15 : back % 7 === 5 || back % 7 === 6 ? 0.55 : 0.4; // weekends quieter
-    if (rnd() < burst) continue;
-    const n = 1 + Math.floor(rnd() * rnd() * 9);
-    for (let i = 0; i < n; i++) out.push([now - back * 86400000 - Math.floor(rnd() * 40000000), kinds[Math.floor(rnd() * kinds.length)], 'demo']);
-  }
-  return out.sort((a, b) => a[0] - b[0]);
+// ---------- one-shot summary used by the home page ----------
+const LC_XP = { Easy: 5, Medium: 10, Hard: 15 } as const;
+const WD = ['อา', 'จ', 'อ', 'พ', 'พฤ', 'ศ', 'ส'];
+
+export function summary() {
+  const solved = catalog.filter((p) => getStatus(p.code) === 'solved').length;
+  const tried = catalog.filter((p) => getStatus(p.code) === 'tried').length;
+  const lcAll = Object.values(leetcodeByChapter).flat();
+  const lcDone = lcAll.filter((x) => isLcDone(x.slug)).length;
+  const xp =
+    catalog.filter((p) => getStatus(p.code) === 'solved').reduce((s, p) => s + 10 * (ratingOf(p.code)?.level ?? 1), 0) +
+    lcAll.filter((x) => isLcDone(x.slug)).reduce((s, x) => s + LC_XP[x.difficulty], 0);
+  const level = levelOf(xp);
+
+  const days = perDay(getLog());
+  const streak = streaks(new Set(days.keys())).current;
+  const now = new Date();
+  const week = Array.from({ length: 7 }, (_, i) => {
+    const d = new Date(now.getFullYear(), now.getMonth(), now.getDate() - (6 - i));
+    const score = days.get(dayKey(d)) ?? 0;
+    return { key: dayKey(d), wd: WD[d.getDay()], date: d.getDate(), score, lv: heatLevel(score), today: i === 6 };
+  });
+  return { solved, tried, total: catalog.length, lcDone, lcTotal: lcAll.length, xp, level, into: xp % XP_PER_LEVEL, streak, week };
 }
