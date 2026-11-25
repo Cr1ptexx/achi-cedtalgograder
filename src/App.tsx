@@ -3,6 +3,7 @@ import Layout from './components/Layout';
 import Home from './pages/Home';
 import ChapterPage from './pages/ChapterPage';
 import PlanPage from './pages/PlanPage';
+import ExamPage from './pages/ExamPage';
 import ProgressPage from './pages/ProgressPage';
 import { lazy, Suspense } from 'react';
 
@@ -16,6 +17,7 @@ export default function App() {
       <Routes>
         <Route element={<Layout />}>
           <Route index element={<Home />} />
+          <Route path="exam" element={<ExamPage />} />
           <Route path="plan" element={<PlanPage />} />
           <Route path="progress" element={<ProgressPage />} />
           <Route path="ch/:slug" element={<ChapterPage />} />

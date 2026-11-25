@@ -49,6 +49,10 @@ export function setLcDone(slug: string, done: boolean) {
   write(`lc:${slug}`, done ? '1' : '0');
 }
 
+/** Simple on/off marks (reviewed a chapter, got a Big-O drill right). */
+export function getFlag(key: string): boolean { return read(`flag:${key}`) === '1'; }
+export function setFlag(key: string, on: boolean) { write(`flag:${key}`, on ? '1' : '0'); }
+
 // ---------- activity log (feeds the heat map on the progress page) ----------
 // One entry per action: [timestamp ms, kind, id]. Capped so storage stays small.
 export type LogKind = 'sub' | 'ac' | 'lc' | 'quiz';

@@ -1,32 +1,41 @@
 import { Link } from 'react-router-dom';
 import { chapters } from '../data/chapters';
 import { catalog } from '../data/catalog';
-import { getStatus, useProgressVersion } from '../store/progress';
-import HeroSort from '../components/HeroSort';
+import { leetcodeByChapter } from '../data/leetcode';
+import { getStatus, isLcDone, useProgressVersion } from '../store/progress';
+import ExamCard from '../components/ExamCard';
 
 export default function Home() {
   useProgressVersion();
   const total = catalog.length;
   const solved = catalog.filter((p) => getStatus(p.code) === 'solved').length;
+  const tried = catalog.filter((p) => getStatus(p.code) === 'tried').length;
+  const lcAll = Object.values(leetcodeByChapter).flat();
+  const lcDone = lcAll.filter((x) => isLcDone(x.slug)).length;
   const next = chapters.find((c) => c.ready && catalog.some((p) => p.chapter === c.slug && getStatus(p.code) !== 'solved')) ?? chapters[0];
 
   return (
     <>
       <section className="hero">
-        <div>
-          <h1>เรียน Algorithm ด้วยการกดดูทีละขั้น แล้วลงมือเขียนเอง</h1>
-          <p>
-            แต่ละบทสรุปแนวคิดจากสไลด์ของวิชา มีตัวจำลองที่เห็นโค้ดวิ่งไปทีละบรรทัด
-            แล้วต่อด้วยโจทย์จาก grader ที่เขียน C++ และตรวจได้ในหน้าเว็บทันที
-          </p>
-          <div className="hero-cta">
-            <Link className="btn primary" to={`/ch/${next.slug}`}>
-              {solved > 0 ? `เรียนต่อ: บท ${next.num} ${next.title}` : 'เริ่มบทแรก'}
-            </Link>
-            <Link className="btn" to="/plan">ดูโจทย์ทั้งหมด {total} ข้อ</Link>
+        <h1>Algo Lab</h1>
+        <p>เว็บฝึกวิชา Algorithm สรุปแนวคิดทีละบท มีตัวจำลองให้กดดู และโจทย์ C++ ที่เขียนกับตรวจได้ในหน้าเว็บ</p>
+
+        <div className="hero-board">
+          <div className="card hero-progress">
+            <div className="hero-progress-top">
+              <div className="hero-count"><b>{solved}</b><span>/ {total} ข้อ</span></div>
+              <Link className="btn small" to={`/ch/${next.slug}`}>
+                {solved > 0 ? `เรียนต่อ: บท ${next.num} ${next.title}` : 'เริ่มบทแรก'}
+              </Link>
+            </div>
+            <div className="progress big"><div style={{ width: `${total ? (solved / total) * 100 : 0}%` }} /></div>
+            <div className="small muted">
+              ผ่านแล้ว {Math.round(total ? (solved / total) * 100 : 0)}% · ลองแล้ว {tried} ข้อ · ยังไม่ทำ {total - solved - tried} ข้อ · LeetCode {lcDone}/{lcAll.length}
+            </div>
           </div>
+          <ExamCard id="grader" />
+          <ExamCard id="paper" />
         </div>
-        <HeroSort />
       </section>
 
       <section>
