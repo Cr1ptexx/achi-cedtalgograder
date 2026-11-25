@@ -248,7 +248,7 @@ export default function SortingViz() {
       {NOTE[algo] && <p className="small muted" style={{ margin: 0 }}>{NOTE[algo]}</p>}
 
       <div className="viz-grid">
-        <div className="stage">
+        <div className="viz-stage">
           <div className="bars" aria-hidden="true">
             {f.arr.map((v, k) => {
               const cls = [

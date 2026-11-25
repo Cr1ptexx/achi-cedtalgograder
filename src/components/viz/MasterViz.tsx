@@ -67,7 +67,7 @@ const tn = d === 0 ? '1' : pw(d);
         <p className="mono" style={{ fontSize: '1.05rem', margin: '8px 0' }}>T(n) = {a === 1 ? '' : `${a}·`}T(n/{b}) + {tn}</p>
       </div>
 
-      <div className="stage">
+      <div className="viz-stage">
         <div>
           <p className="small muted" style={{ margin: '0 0 8px' }}>งานรวมในแต่ละชั้นของ recursion tree (ตัวอย่างที่ n = {b}^{LEVELS - 1} = {n.toLocaleString('en-US')})</p>
           <div style={{ display: 'grid', gap: 6 }}>

@@ -27,7 +27,7 @@ export default function StepShell({ frames, code, title, resetKey, options, labe
     <div className="viz" tabIndex={0} onKeyDown={s.onKeyDown} aria-label={label}>
       {options && <div className="viz-options">{options}</div>}
       <div className="viz-grid">
-        <div className="stage">
+        <div className="viz-stage">
           {f.stage}
           <div className={`step-note ${f.tone ?? (last ? 'good' : '')}`} aria-live="polite">{f.msg}</div>
         </div>

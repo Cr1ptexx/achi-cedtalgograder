@@ -176,7 +176,7 @@ export default function PermutationViz() {
       </div>
 
       <div className="viz-grid">
-        <div className="stage">
+        <div className="viz-stage">
           <div className="perm-board">
             <div>
               <div className="label">ช่องคำตอบ sol[]</div>
