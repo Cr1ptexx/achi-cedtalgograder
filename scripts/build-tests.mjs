@@ -6,7 +6,9 @@
 //
 //   node scripts/build-tests.mjs
 import { execFileSync, spawnSync } from 'node:child_process';
-import { existsSync, mkdirSync, readFileSync, writeFileSync } from 'node:fs';
+import { existsSync, mkdirSync, readdirSync, readFileSync, statSync, writeFileSync } from 'node:fs';
+import { pathToFileURL } from 'node:url';
+import { validators } from '../src/runner/validators.ts';
 
 const OUT = 'public/tests';
 mkdirSync(OUT, { recursive: true });
@@ -26,21 +28,73 @@ const lines = (s) => {
   while (l.length && l[l.length - 1] === '') l.pop();
   return l;
 };
+const NUM = /^[+-]?(\d+\.?\d*|\.\d+)([eE][+-]?\d+)?$/;
+const sameFloatLine = (p, q) => {
+  if (p === q) return true;
+  const a = p.split(/\s+/), b = q.split(/\s+/);
+  return a.length === b.length && a.every((t, i) => t === b[i] || (NUM.test(t) && NUM.test(b[i]) &&
+    Math.abs(+t - +b[i]) <= Math.max(1e-4, 1e-7 * Math.max(Math.abs(+t), Math.abs(+b[i])))));
+};
 const same = (a, b, checker) => {
   let x = lines(a), y = lines(b);
   if (checker === 'lines-any-order') { x = [...x].sort(); y = [...y].sort(); }
+  if (checker === 'float') return x.length === y.length && x.every((v, i) => sameFloatLine(v, y[i]));
   return x.length === y.length && x.every((v, i) => v === y[i]);
 };
 
-function ref(code) {
-  const src = `_source/ref/${code}.cpp`, exe = `_source/ref/${code}.exe`;
-  if (!existsSync(exe)) execFileSync('g++', ['-O2', '-std=c++17', '-o', exe, src], { stdio: 'inherit' });
+let maxMs = 0, lastMs = 0;
+function runner(exe, code, track = false) {
   return (input) => {
-    const r = spawnSync(exe, { input, maxBuffer: 1 << 28, encoding: 'utf8' });
-    if (r.status !== 0) throw new Error(`${code}: ref exited ${r.status}`);
+    const t0 = performance.now();
+    const r = spawnSync(exe, { input, maxBuffer: 1 << 28, encoding: 'utf8', timeout: 120000 });
+    lastMs = performance.now() - t0;
+    if (track) maxMs = Math.max(maxMs, lastMs);
+    if (r.status !== 0) throw new Error(`${code}: ${exe} exited ${r.status}\n${String(r.stderr).slice(0, 300)}`);
     return r.stdout;
   };
 }
+function build(src, exe) {
+  if (!existsSync(exe) || statSync(exe).mtimeMs < statSync(src).mtimeMs) {
+    execFileSync('g++', ['-O2', '-std=c++17', '-o', exe, src], { stdio: 'inherit' });
+  }
+}
+function ref(code) {
+  const src = `_source/ref/${code}.cpp`, exe = `_source/ref/${code}.exe`;
+  build(src, exe);
+  return runner(exe, code, true);
+}
+/** Optional slow-but-obviously-correct solution used to cross-check the reference. */
+function brute(code) {
+  const src = `_source/ref/${code}.brute.cpp`, exe = `_source/ref/${code}.brute.exe`;
+  if (!existsSync(src)) return null;
+  build(src, exe);
+  return runner(exe, code);
+}
+
+// Helpers handed to per-problem generators.
+const H = {
+  rng, int,
+  pick: (r, a) => a[Math.floor(r() * a.length)],
+  shuffle: (r, a) => { const b = [...a]; for (let i = b.length - 1; i > 0; i--) { const j = Math.floor(r() * (i + 1)); [b[i], b[j]] = [b[j], b[i]]; } return b; },
+  range: (n, from = 0) => Array.from({ length: n }, (_, i) => i + from),
+  /** random tree on nodes 0..n-1: returns edges [parent, child] */
+  tree: (r, n) => Array.from({ length: n - 1 }, (_, i) => [int(r, 0, i), i + 1]),
+  /** m distinct random undirected edges [a, b] with a < b on nodes lo..hi (inclusive); `avoid` is a Set of "a,b" keys to skip */
+  edges: (r, lo, hi, m, avoid = new Set()) => {
+    const out = [], have = new Set(avoid);
+    const cap = ((hi - lo + 1) * (hi - lo)) / 2;
+    m = Math.min(m, cap - have.size);
+    for (let guard = 0; out.length < m && guard < m * 50 + 1000; guard++) {
+      let a = int(r, lo, hi), b = int(r, lo, hi);
+      if (a === b) continue;
+      if (a > b) [a, b] = [b, a];
+      const key = `${a},${b}`;
+      if (have.has(key)) continue;
+      have.add(key); out.push([a, b]);
+    }
+    return out;
+  },
+};
 
 // ---------- problems ----------
 const P = {
@@ -155,29 +209,63 @@ function sort3Brute(a) {
   }
 }
 
+// Per-problem modules: scripts/problems/<code>.mjs
+//   export default { checker, samples: [[in, out]], gen(H) => [input], small?(H, r) => input }
+// `small` is used to cross-check the reference against _source/ref/<code>.brute.cpp.
+if (existsSync('scripts/problems')) {
+  for (const f of readdirSync('scripts/problems').filter((x) => x.endsWith('.mjs'))) {
+    P[f.replace(/\.mjs$/, '')] = (await import(pathToFileURL(`scripts/problems/${f}`).href)).default;
+  }
+}
+const only = process.argv.slice(2);
+
 // ---------- build ----------
 let failed = false;
 for (const [code, cfg] of Object.entries(P)) {
+  if (only.length && !only.some((o) => code.includes(o))) continue;
+  maxMs = 0;
   const run = ref(code);
-  const grader = JSON.parse(readFileSync(`tests-src/${code}.grader.json`, 'utf8'));
+  const slow = brute(code);
+  const grader = existsSync(`tests-src/${code}.grader.json`) ? JSON.parse(readFileSync(`tests-src/${code}.grader.json`, 'utf8')) : [];
   const tests = [];
   const seen = new Set();
-  const add = (input, output, source) => {
+  let dropped = 0;
+  // Tests the reference needs more than `maxMs` for (default 500 ms) would be hopeless in the browser,
+  // which is several times slower than a native run. They are verified, then left out.
+  const cap = cfg.maxMs ?? 500;
+  const add = (input, output, source, ms = 0) => {
     const key = input.trim();
     if (seen.has(key)) return;
     seen.add(key);
+    if (source !== 'sample' && ms > cap) { dropped++; console.warn(`  ! ${code}: left out a ${source} test (${ms.toFixed(0)} ms native, too heavy for the browser)`); return; }
     tests.push({ input, output, source });
   };
 
+  // `ok` compares like the browser will: exact/any-order/float against the expected text, or a validator for `custom`.
+  const ok = (input, expected, got) => cfg.checker === 'custom'
+    ? validators[cfg.validator](input, got) === null
+    : same(expected, got, cfg.checker);
   for (const [input, expected] of cfg.samples) {
-    if (!same(expected, run(input), cfg.checker)) { console.error(`✗ ${code}: ref disagrees with statement sample\n${input}`); failed = true; }
+    if (!ok(input, expected, run(input))) { console.error(`✗ ${code}: ref disagrees with statement sample\n${input}`); failed = true; }
+    if (cfg.checker === 'custom' && validators[cfg.validator](input, expected) !== null) { console.error(`✗ ${code}: the statement's sample answer fails the validator\n${input}`); failed = true; }
     add(input, expected, 'sample');
   }
   for (const t of grader) {
-    if (!same(t.output, run(t.input), cfg.checker)) { console.error(`✗ ${code}: ref disagrees with grader test\n${t.input.slice(0, 80)}`); failed = true; }
-    add(t.input, t.output, 'grader');
+    if (!ok(t.input, t.output, run(t.input))) { console.error(`✗ ${code}: ref disagrees with grader test\n${t.input.slice(0, 80)}`); failed = true; }
+    add(t.input, t.output, 'grader', lastMs);
   }
-  for (const input of cfg.gen()) add(input, run(input), 'generated');
+  for (const input of cfg.gen(H)) { const out = run(input); add(input, out, 'generated', lastMs); }
+
+  if (slow && cfg.small) {
+    const r = rng(12345);
+    let bad = 0;
+    for (let it = 0; it < 300 && !bad; it++) {
+      const input = cfg.small(H, r);
+      const fromSlow = slow(input), fromRef = run(input);
+      if (!(cfg.checker === 'custom' ? ok(input, '', fromSlow) && ok(input, '', fromRef) : same(fromSlow, fromRef, cfg.checker))) { console.error(`✗ ${code}: ref disagrees with brute force on\n${input}`); bad = 1; failed = true; }
+    }
+    if (!bad) console.log(`  · ${code}: ref == brute force on 300 random small inputs`);
+  }
 
   if (code === 'ex04m1_sort') {
     const r = rng(99);
@@ -188,9 +276,10 @@ for (const [code, cfg] of Object.entries(P)) {
     }
   }
 
-  const json = JSON.stringify({ checker: cfg.checker, tests });
+  const json = JSON.stringify({ checker: cfg.checker, ...(cfg.validator ? { validator: cfg.validator } : {}), tests, ...(dropped ? { dropped } : {}) });
   writeFileSync(`${OUT}/${code}.json`, json);
   const by = (s) => tests.filter((t) => t.source === s).length;
-  console.log(`✓ ${code}: ${tests.length} tests (sample ${by('sample')}, grader ${by('grader')}, generated ${by('generated')}) ${(json.length / 1024).toFixed(0)} KB`);
+  console.log(`✓ ${code}: ${tests.length} tests (sample ${by('sample')}, grader ${by('grader')}, generated ${by('generated')}) ${(json.length / 1024).toFixed(0)} KB, slowest native run ${maxMs.toFixed(0)} ms`);
+  if (json.length > 1.5 * 1024 * 1024) console.warn(`  ! ${code}: test file is large (${(json.length / 1048576).toFixed(1)} MB), consider smaller generated cases`);
 }
 if (failed) { console.error('\nReference check FAILED'); process.exit(1); }

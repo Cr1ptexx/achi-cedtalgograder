@@ -1,19 +1,18 @@
 import type { Problem } from './types';
-
-const STARTER = `#include <bits/stdc++.h>
-using namespace std;
-
-int main() {
-    ios::sync_with_stdio(false);
-    cin.tie(nullptr);
-
-    return 0;
-}
-`;
+import { STARTER } from './starter';
+import { recursionProblems } from './problem-sets/recursion';
+import { divideConquerProblems } from './problem-sets/divide-conquer';
+import { dpProblems } from './problem-sets/dp';
+import { greedyProblems } from './problem-sets/greedy';
+import { graphProblems } from './problem-sets/graph';
+import { shortestPathProblems } from './problem-sets/shortest-path';
+import { searchProblems } from './problem-sets/search';
+import { examProblems } from './problem-sets/exam';
 
 // Statements are short paraphrases of the grader PDFs, written in our own words.
 // Full test sets live in public/tests/<code>.json (built by scripts/build-tests.mjs).
-export const problems: Problem[] = [
+// Chapters 1–2 are defined below; later chapters live in ./problem-sets/.
+const earlyProblems: Problem[] = [
   {
     code: 'ex00e4',
     title: 'Gen Barcode',
@@ -106,6 +105,110 @@ export const problems: Problem[] = [
     starter: STARTER,
     timeLimitMs: 2000,
   },
+  {
+    code: 'da67_f_abc_permutation',
+    title: 'ABC Permutation',
+    graderId: 1596,
+    chapter: 'brute-force',
+    statement: {
+      task: 'ให้สร้างสตริงยาว N ที่ประกอบด้วยตัวอักษร A, B, C โดยใช้ A ได้ไม่เกิน i ตัว, B ไม่เกิน j ตัว, C ไม่เกิน k ตัว (ไม่จำเป็นต้องใช้ให้ครบ) พิมพ์จำนวนสตริงทั้งหมดในบรรทัดแรก แล้วพิมพ์ทุกสตริงเรียงตามพจนานุกรมบรรทัดละหนึ่งสตริง',
+      input: 'บรรทัดเดียว N i j k',
+      output: 'บรรทัดแรกเป็นจำนวนสตริง P ตามด้วย P บรรทัด เรียงตามพจนานุกรม',
+      constraints: '1 ≤ N ≤ 12 · 0 ≤ i, j, k ≤ N · ถ้าไม่มีสตริงที่ใช้ได้ ให้พิมพ์ 0',
+      samples: [
+        { input: '2 0 1 3', output: '3\nBC\nCB\nCC\n' },
+        { input: '2 1 1 3', output: '7\nAB\nAC\nBA\nBC\nCA\nCB\nCC\n' },
+      ],
+    },
+    hints: [
+      'เติมทีละตำแหน่งจากซ้ายไปขวาด้วย recursion แต่ละตำแหน่งลองตัวอักษร A, B, C ตามลำดับ ผลลัพธ์จะออกมาเรียงพจนานุกรมเองโดยไม่ต้อง sort',
+      'เก็บ used[3] ว่าแต่ละตัวอักษรใช้ไปกี่ตัวแล้ว ลองใส่ตัวอักษร c ได้ต่อเมื่อ used[c] < limit[c] และอย่าลืมคืนค่า used[c]-- หลังเรียก recursion กลับมา',
+      'ต้องพิมพ์จำนวนก่อนสตริงทั้งหมด → เก็บสตริงที่ได้ลงตัวแปรสะสม (หรือ vector) และนับไปด้วย แล้วค่อยพิมพ์ทีเดียวตอนท้าย ใช้ "\\n" แทน endl',
+    ],
+    starter: STARTER,
+    timeLimitMs: 1000,
+  },
+  {
+    code: 'da68_f_abcd_permutation',
+    title: 'ABCD Permutation',
+    graderId: 1660,
+    chapter: 'brute-force',
+    statement: {
+      task: 'เหมือน ABC Permutation แต่มีตัวอักษร A, B, C, D โดยใช้ได้ไม่เกิน a, b, c, d ตัวตามลำดับ สร้างสตริงยาว N ทุกแบบ พิมพ์จำนวนในบรรทัดแรก แล้วตามด้วยสตริงทั้งหมดเรียงตามพจนานุกรม',
+      input: 'บรรทัดเดียว N a b c d',
+      output: 'บรรทัดแรกเป็นจำนวนสตริง ตามด้วยสตริงทั้งหมดเรียงตามพจนานุกรมบรรทัดละหนึ่งสตริง',
+      constraints: '1 ≤ N ≤ 9 · 0 ≤ a, b, c, d ≤ N',
+      samples: [
+        { input: '2 2 2 1 0', output: '8\nAA\nAB\nAC\nBA\nBB\nBC\nCA\nCB\n' },
+        { input: '5 3 0 2 0', output: '10\nAAACC\nAACAC\nAACCA\nACAAC\nACACA\nACCAA\nCAAAC\nCAACA\nCACAA\nCCAAA\n' },
+      ],
+    },
+    hints: [
+      'โครงสร้างเดียวกับข้อ ABC Permutation เปลี่ยนจาก 3 ตัวอักษรเป็น 4 ตัว เก็บ limit[4] และ used[4]',
+      'ลองตัวอักษรตามลำดับ A→D ในทุกตำแหน่ง ผลลัพธ์จะเรียงพจนานุกรมอยู่แล้ว ตัดกิ่งทันทีเมื่อตัวอักษรนั้นใช้ครบโควตา',
+      'ที่ N = 9 มีได้สูงสุด 4⁹ = 262,144 สตริง พิมพ์ได้ทัน ขอแค่ใช้ fast IO หรือสะสมผลลงสตริงเดียวแล้วพิมพ์ครั้งเดียว',
+    ],
+    starter: STARTER,
+    timeLimitMs: 2000,
+  },
+  {
+    code: 'a66_q2a_insertion_count',
+    title: 'Insertion Sort Count',
+    graderId: 1586,
+    chapter: 'sorting',
+    statement: {
+      task: 'ที่ห้องเรียนมีโค้ด insertion sort ที่เริ่มแทรกสมาชิกจากท้ายอาร์เรย์มาหน้า (ตำแหน่ง n−2 ลงไปถึง 0) โดยในลูปแทรกจะมีคำสั่งเลื่อนสมาชิกที่ใหญ่กว่า/เล็กกว่าไปทางซ้ายทีละตัว (คำสั่ง A[i−1] = A[i]) ให้ตอบ m คำถาม แต่ละคำถามให้ค่า k ที่อยู่ในอาร์เรย์ และให้บอกว่าตอนที่แทรก k ลงตำแหน่งที่ถูกต้อง คำสั่งเลื่อนทำงานกี่ครั้ง',
+      input: 'บรรทัดแรก n m · บรรทัดที่สอง A[0..n−1] (เป็นการเรียงสับเปลี่ยนของ 1..n) · บรรทัดที่สามมี k จำนวน m ตัว',
+      output: 'ตอบคำถามละหนึ่งบรรทัด',
+      constraints: 'ข้อสุดท้ายใน grader มี n ถึง 200,000 และ m ≤ 1,000 · ถ้าจำลอง insertion sort ตรง ๆ จะช้ามาก',
+      samples: [
+        { input: '6 2\n3 4 6 2 1 5\n6 2', output: '0\n3\n' },
+        { input: '6 6\n3 4 6 2 1 5\n6 5 4 3 2 1', output: '0\n1\n0\n0\n3\n4\n' },
+      ],
+    },
+    hints: [
+      'ตอนแทรกค่า k ตัวมันเลื่อนผ่านสมาชิกที่อยู่ทางขวาของมัน (ซึ่งเรียงแล้ว) และมีค่าน้อยกว่า k เท่านั้น เพราะฉะนั้นคำตอบของ k = จำนวนค่าที่อยู่ "ทางขวา" ของ k ในอาร์เรย์เดิมและ "น้อยกว่า" k',
+      'ถ้าตอบแต่ละคำถามด้วยการไล่นับ O(n) จะได้ O(n·m) ซึ่งช้าเกินสำหรับข้อมูลใหญ่ ให้คำนวณคำตอบของ "ทุกค่า" ไว้ล่วงหน้าครั้งเดียว แล้วตอบทุกคำถามด้วยการอ่านจากตาราง',
+      'ไล่ i = 0..n−1 ใช้ Fenwick tree (BIT) นับว่าค่าที่น้อยกว่า A[i] และอยู่ทางซ้ายมีกี่ตัว s แล้วค่าที่น้อยกว่าและอยู่ขวา = (A[i]−1) − s (เพราะเป็น permutation ของ 1..n) เก็บ ans[A[i]] เวลา O(n log n)',
+    ],
+    starter: STARTER,
+    timeLimitMs: 2000,
+  },
+  {
+    code: 'a65_q2a_huge_array',
+    title: 'Huge Array',
+    graderId: 1587,
+    chapter: 'sorting',
+    statement: {
+      task: 'อาร์เรย์ขนาดมหึมาถูกบีบอัดมาเป็น N คู่ (X, C) หมายถึงค่า X ซ้ำ C ครั้ง เมื่อนำทุกคู่มาต่อกันแล้วเรียงจากน้อยไปมาก ให้ตอบ Q คำถามว่า "สมาชิกตัวที่ P (นับจาก 1) ของอาร์เรย์ที่เรียงแล้วคือค่าอะไร"',
+      input: 'บรรทัดแรก N Q · อีก N บรรทัดเป็น X C · อีก Q บรรทัดเป็น P',
+      output: 'คำตอบแต่ละคำถามบรรทัดละหนึ่งค่า',
+      constraints: 'ผลรวมของ C ได้ถึง 2×10⁹ (ใหญ่เกิน int) และ X ได้ถึง 2×10⁹ · สร้างอาร์เรย์จริงไม่ได้',
+      samples: [
+        { input: '5 2\n1 1\n10 1\n5 1\n1 1\n3 1\n5\n1', output: '10\n1\n' },
+        { input: '5 3\n9 1\n4 5\n9 3\n8 3\n7 7\n1\n15\n8', output: '4\n8\n7\n' },
+      ],
+    },
+    hints: [
+      'อย่าขยายอาร์เรย์จริง ให้เรียงคู่ (X, C) ตามค่า X แล้วคิดเป็น "ช่วง" ของตำแหน่ง: คู่แรกครอบตำแหน่ง 1..C₁, คู่ที่สองครอบ C₁+1..C₁+C₂ ฯลฯ',
+      'สร้างผลรวมสะสม pre[i] = C₁ + … + Cᵢ (ใช้ long long!) คำตอบของ P คือค่า X ของคู่แรกที่ pre[i] ≥ P',
+      'หาคู่นั้นด้วยการค้นหาแบบทวิภาค (lower_bound บน pre) ต่อคำถามเวลา O(log N) รวม O((N+Q) log N) · ระวังคู่ที่มี X เท่ากันหลายคู่ ไม่ต้องรวมก็ได้เพราะหลังเรียงยังได้ผลเหมือนเดิม',
+    ],
+    starter: STARTER,
+    timeLimitMs: 2000,
+  },
+];
+
+export const problems: Problem[] = [
+  ...earlyProblems,
+  ...recursionProblems,
+  ...divideConquerProblems,
+  ...dpProblems,
+  ...greedyProblems,
+  ...graphProblems,
+  ...shortestPathProblems,
+  ...searchProblems,
+  ...examProblems,
 ];
 
 export const problemByCode = new Map(problems.map((p) => [p.code, p]));

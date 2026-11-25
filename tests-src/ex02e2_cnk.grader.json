@@ -1,0 +1,1 @@
+[{"input":"10 9\n","output":"10\n"},{"input":"10 3\n","output":"120\n"},{"input":"10 6\n","output":"210\n"},{"input":"20 17\n","output":"1140\n"},{"input":"25 9\n","output":"2042975\n"},{"input":"30 6\n","output":"593775\n"},{"input":"30 13\n","output":"119759850\n"},{"input":"30 3\n","output":"4060\n"}]

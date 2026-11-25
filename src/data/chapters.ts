@@ -1,4 +1,5 @@
 import type { Chapter } from './types';
+import { advancedChapters } from './chapters-adv';
 
 // Concept text is our own summary, organised to follow the course slide decks
 // (algo/01-brute-force.pdf, algo/02-sorting.pdf) without copying them.
@@ -192,20 +193,7 @@ export const chapters: Chapter[] = [
       'อ่านนิยามของ "หนึ่งครั้ง" ในโจทย์ให้ดี ว่านับการเทียบ การสลับ หรือการเลื่อน',
     ],
   },
-  ...([
-    ['recursion', '03', 'Recursion & Analysis', 'รีเคอร์ชันและการวิเคราะห์'],
-    ['divide-conquer', '04', 'Divide & Conquer', 'แบ่งแยกและเอาชนะ'],
-    ['dp', '05', 'Dynamic Programming', 'กำหนดการพลวัต'],
-    ['greedy', '06', 'Greedy', 'อัลกอริทึมละโมบ'],
-    ['graph', '07', 'Graph', 'กราฟ: BFS / DFS'],
-    ['shortest-path', '08', 'Shortest Path & MST', 'วิถีสั้นสุดและต้นไม้แผ่ทั่ว'],
-    ['search', '09', 'State-space Search', 'ค้นหาในปริภูมิสถานะ'],
-    ['np', '10', 'NP-Complete', 'ปัญหายาก NP-Complete'],
-  ] as const).map(([slug, num, title, thaiTitle]) => ({
-    slug, num, title, thaiTitle,
-    blurb: 'กำลังสรุปจากสไลด์ — โจทย์ของบทนี้ทำบน grader ได้จากหน้าแผน',
-    ready: false, concepts: [], quiz: [], complexity: [], pitfalls: [],
-  }) satisfies Chapter),
+  ...advancedChapters,
 ];
 
 export const chapterBySlug = new Map(chapters.map((c) => [c.slug, c]));

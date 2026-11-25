@@ -5,7 +5,8 @@ import { chapters, chapterBySlug } from '../data/chapters';
 import { problemByCode } from '../data/problems';
 import { ratingOf, STATS_DATE, type Level } from '../data/ratings';
 import type { CatalogEntry } from '../data/types';
-import { getStatus, useProgressVersion, type Status } from '../store/progress';
+import { getStatus, isLcDone, useProgressVersion, type Status } from '../store/progress';
+import { leetcodeByChapter } from '../data/leetcode';
 import StatusDot from '../components/StatusDot';
 import { DifficultyBadge, WorthStars } from '../components/Difficulty';
 
@@ -18,6 +19,8 @@ export default function PlanPage() {
   const [level, setLevel] = useState<0 | Level>(0);
   const [sort, setSort] = useState<Sort>('chapter');
 
+  const lcAll = Object.values(leetcodeByChapter).flat();
+  const lcDone = lcAll.filter((x) => isLcDone(x.slug)).length;
   const total = catalog.length;
   const solved = catalog.filter((p) => getStatus(p.code) === 'solved').length;
   const tried = catalog.filter((p) => getStatus(p.code) === 'tried').length;
@@ -34,6 +37,7 @@ export default function PlanPage() {
           <div className="stat"><b>{solved}</b><span>ผ่านแล้ว</span></div>
           <div className="stat"><b>{tried}</b><span>ลองแล้ว</span></div>
           <div className="stat"><b>{total - solved - tried}</b><span>ยังไม่ทำ</span></div>
+          <div className="stat" title="ข้อ LeetCode ที่ติ๊กว่าทำแล้ว (ติ๊กเองในหน้าบทเรียน)"><b>{lcDone}<small className="muted">/{lcAll.length}</small></b><span>LeetCode</span></div>
           <div className="grow">
             <div className="progress big"><div style={{ width: `${(solved / total) * 100}%` }} /></div>
             <div className="small muted">ผ่าน {Math.round((solved / total) * 100)}% ของ {total} ข้อ</div>

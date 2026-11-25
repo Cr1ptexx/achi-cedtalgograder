@@ -41,6 +41,7 @@ export default function ProblemPage() {
   const [testFile, setTestFile] = useState<TestFile | null>(null);
   const [testErr, setTestErr] = useState(false);
   const [checker, setChecker] = useState<Checker>('exact');
+  const [validator, setValidator] = useState<string | undefined>();
 
   useEffect(() => {
     if (!p) return;
@@ -50,7 +51,7 @@ export default function ProblemPage() {
     setTestFile(null); setTestErr(false);
     fetch(`${import.meta.env.BASE_URL}tests/${p.code}.json`)
       .then((r) => (r.ok ? r.json() : Promise.reject(r.status)))
-      .then((f: TestFile) => { setTestFile(f); setChecker(f.checker); })
+      .then((f: TestFile) => { setTestFile(f); setChecker(f.checker); setValidator(f.validator); })
       .catch(() => setTestErr(true));
   }, [p]);
 
@@ -77,7 +78,7 @@ export default function ProblemPage() {
       if (!c.ok) { setLog(c.log); setPhase('ce'); setFailedOnce(true); if (isSubmit) markResult(p.code, false); return; }
       setLog(c.log);
       setPhase('running');
-      const rs = await runner.runTests(c.wasm, tests, (r) => setResults((prev) => [...prev, r]), p.timeLimitMs, checker);
+      const rs = await runner.runTests(c.wasm, tests, (r) => setResults((prev) => [...prev, r]), p.timeLimitMs, checker, validator);
       setPhase('done');
       const allOk = rs.every((r) => r.verdict === 'AC');
       if (!allOk) setFailedOnce(true);
@@ -123,7 +124,11 @@ export default function ProblemPage() {
   }, []);
 
   if (!p) return <p>ไม่พบโจทย์นี้ <Link to="/plan">ไปหน้าแผนการเรียน</Link></p>;
-  const ch = chapterBySlug.get(p.chapter)!;
+  // the exam set has no chapter page of its own; it lives on the plan page
+  const ch = chapterBySlug.get(p.chapter);
+  const back = ch
+    ? { to: `/ch/${ch.slug}`, label: `บท ${ch.num} ${ch.title}` }
+    : { to: '/plan', label: 'ข้อสอบปลายภาคเก่า (แผนการเรียน)' };
 
   const onChange = (v: string) => {
     setSrc(v);
@@ -138,7 +143,7 @@ export default function ProblemPage() {
   return (
     <div className="ide">
       <section className="ide-left card">
-        <Link to={`/ch/${ch.slug}`} className="small">บท {ch.num} {ch.title}</Link>
+        <Link to={back.to} className="small">{back.label}</Link>
         <h1 className="prob-h1">{p.title}</h1>
         <div className="meta-row">
           <span className="muted small">{p.code}</span>
@@ -173,8 +178,11 @@ export default function ProblemPage() {
           {testFile
             ? <>ตรวจจริงด้วย {testFile.tests.length} ชุด: ตัวอย่างในโจทย์ {counts.sample}, จาก grader {counts.grader}, สร้างเพิ่ม {counts.generated}. </>
             : testErr ? 'โหลดชุดทดสอบไม่สำเร็จ ลองรีเฟรชหน้า. ' : 'กำลังโหลดชุดทดสอบ… '}
+          {testFile?.dropped ? `ข้ามอีก ${testFile.dropped} ชุดที่หนักเกินไปสำหรับเบราว์เซอร์ (ลองบน grader ได้). ` : ''}
           จำกัดเวลา {p.timeLimitMs / 1000} วินาทีต่อชุด
           {checker === 'lines-any-order' && ' และไม่สนลำดับบรรทัด'}
+          {checker === 'custom' && ' ข้อนี้ตอบได้หลายแบบ ระบบตรวจว่าคำตอบของคุณตรงเงื่อนไขของโจทย์ ไม่ได้เทียบกับคำตอบเดียว'}
+          {checker === 'float' &&' และยอมให้ทศนิยมคลาดเคลื่อนได้ 0.0001 (หรือ 0.00001% ถ้าตัวเลขใหญ่)'}
         </p>
 
         {failedOnce && (
@@ -319,7 +327,9 @@ function TestDetail({ t, r, onTry }: { t: TestCase; r: TestResult; onTry: (input
       </div>
       {r.firstDiff && (
         <div className="diffline">
-          {r.firstDiff.line > 0
+          {r.firstDiff.line === -1
+            ? <>เงื่อนไขของโจทย์: <code>{r.firstDiff.expected}</code> แต่ <code>{r.firstDiff.got}</code></>
+            : r.firstDiff.line > 0
             ? <>บรรทัดที่ {r.firstDiff.line} ควรเป็น <code>{r.firstDiff.expected}</code> แต่ได้ <code>{r.firstDiff.got}</code></>
             : <>ต้องมีบรรทัด <code>{r.firstDiff.expected}</code> แต่ <code>{r.firstDiff.got}</code></>}
         </div>

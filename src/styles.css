@@ -502,3 +502,67 @@ code { font-family: var(--mono); font-size: 0.88em; }
   .note-item .n { left: 10px; }
   .bars { gap: 3px; }
 }
+
+/* ---------- generic visualizer parts (chapters 03-10) ---------- */
+.cells { display: flex; gap: 6px; flex-wrap: wrap; padding: 6px 0 4px; }
+.cell { min-width: 44px; padding: 8px 6px 4px; border: 2px solid var(--border); border-radius: 9px; background: var(--surface-2); text-align: center; transition: background 0.2s, border-color 0.2s, opacity 0.2s; }
+.cell b { display: block; font: 600 1rem var(--mono); }
+.cell i { display: block; font: 0.7rem var(--mono); color: var(--muted); font-style: normal; }
+.cell.cmp { border-color: var(--marker); background: var(--marker-soft); }
+.cell.hit { border-color: var(--pen); background: var(--pen-soft); }
+.cell.done { border-color: var(--green); background: var(--green-soft); }
+.cell.bad { border-color: var(--red); background: var(--red-soft); }
+.cell.dim { opacity: 0.28; }
+.grid-wrap { overflow-x: auto; }
+.grid-tbl { border-collapse: separate; border-spacing: 3px; font: 0.88rem var(--mono); }
+.grid-tbl th { color: var(--muted); font-weight: 600; padding: 4px 8px; text-align: center; }
+.grid-tbl td { min-width: 38px; padding: 6px 8px; text-align: center; border: 2px solid var(--border); border-radius: 7px; background: var(--surface-2); transition: background 0.2s, border-color 0.2s; }
+.grid-tbl td.cur { border-color: var(--marker); background: var(--marker-soft); font-weight: 700; }
+.grid-tbl td.dep { border-color: var(--pen); background: var(--pen-soft); }
+.grid-tbl td.done { border-color: var(--green); background: var(--green-soft); font-weight: 700; }
+.grid-tbl td.bad { border-color: var(--red); background: var(--red-soft); }
+.gsvg { width: 100%; max-width: 440px; height: auto; display: block; }
+.g-edge line { stroke: var(--border); stroke-width: 2.5; transition: stroke 0.2s; }
+.g-edge text { font: 600 11px var(--mono); fill: var(--muted); text-anchor: middle; }
+.g-edge.use line { stroke: var(--green); stroke-width: 4.5; }
+.g-edge.try line { stroke: var(--marker); stroke-width: 4.5; }
+.g-edge.skip line { stroke: var(--red); stroke-width: 3; stroke-dasharray: 5 4; }
+.g-node circle { fill: var(--surface); stroke: var(--muted); stroke-width: 2.5; transition: fill 0.2s, stroke 0.2s; }
+.g-node text { font: 700 14px var(--mono); fill: var(--ink); }
+.g-node .g-lab { font: 600 11px var(--mono); fill: var(--pen); }
+.g-node.cur circle { fill: var(--marker-soft); stroke: var(--marker); stroke-width: 4; }
+.g-node.seen circle { fill: var(--pen-soft); stroke: var(--pen); }
+.g-node.done circle { fill: var(--green-soft); stroke: var(--green); }
+.chips-row { display: flex; gap: 6px; flex-wrap: wrap; align-items: center; }
+.chips-t { font-size: 0.85rem; color: var(--muted); min-width: 74px; }
+.chip2 { font: 600 0.88rem var(--mono); padding: 2px 10px; border-radius: 999px; background: var(--surface-2); border: 1px solid var(--border); }
+.chip2.good { background: var(--green-soft); border-color: var(--green); }
+.chip2.pen { background: var(--pen-soft); border-color: var(--pen); }
+.tl { display: grid; gap: 4px; }
+.tl-row { display: grid; grid-template-columns: repeat(17, minmax(0, 1fr)); height: 26px; background: repeating-linear-gradient(90deg, transparent 0 calc(100% / 17 - 1px), var(--border) calc(100% / 17 - 1px) calc(100% / 17)); border-radius: 4px; }
+.tl-bar { border-radius: 6px; border: 2px solid var(--border); background: var(--surface-2); font: 0.7rem/20px var(--mono); padding: 0 5px; overflow: hidden; white-space: nowrap; transition: background 0.2s, border-color 0.2s, opacity 0.2s; }
+.tl-bar.cmp { border-color: var(--marker); background: var(--marker-soft); }
+.tl-bar.done { border-color: var(--green); background: var(--green-soft); }
+.tl-bar.bad { border-color: var(--red); background: var(--red-soft); opacity: 0.6; }
+.board { display: grid; gap: 3px; width: max-content; }
+.sq { width: 46px; height: 46px; display: grid; place-items: center; font-size: 1.4rem; border-radius: 6px; background: var(--surface-2); border: 2px solid var(--border); }
+.sq.alt { background: var(--surface); }
+.sq.cmp { border-color: var(--marker); background: var(--marker-soft); }
+.sq.bad { border-color: var(--red); background: var(--red-soft); }
+.sq.good { border-color: var(--green); background: var(--green-soft); }
+.ctl { display: flex; gap: 10px; align-items: center; flex-wrap: wrap; }
+.ctl label { display: flex; gap: 6px; align-items: center; font-size: 0.9rem; }
+.mlvl { display: grid; grid-template-columns: 74px minmax(0, 1fr) 96px; gap: 10px; align-items: center; font: 0.82rem var(--mono); }
+.mlvl-bar { height: 16px; border-radius: 5px; background: var(--pen-soft); border: 2px solid var(--pen); min-width: 4px; transition: width 0.25s; }
+.verdict { padding: 12px 16px; border-radius: var(--r-sm); background: var(--green-soft); border-left: 4px solid var(--green); }
+@media (max-width: 760px) { .sq { width: 38px; height: 38px; } .mlvl { grid-template-columns: 58px minmax(0, 1fr) 80px; } }
+
+/* ---------- LeetCode practice rows ---------- */
+.lc-row { display: flex; gap: 14px; align-items: center; padding: 12px 16px; }
+.lc-row.done { opacity: 0.62; }
+.lc-row.done .prob-title { text-decoration: line-through; }
+.lc-check input { width: 20px; height: 20px; accent-color: var(--green); cursor: pointer; }
+.lc-lvl { font-size: 0.82rem; font-weight: 600; padding: 2px 10px; border-radius: 999px; border: 1px solid currentColor; white-space: nowrap; }
+.lc-easy { color: var(--green); }
+.lc-medium { color: var(--pen); }
+.lc-hard { color: var(--red); }

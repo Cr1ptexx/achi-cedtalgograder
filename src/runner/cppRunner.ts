@@ -1,3 +1,5 @@
+import { validators } from './validators';
+
 // Main-thread client for public/runner/worker.js.
 // One long-lived "compile" worker keeps clang warm; a separate "exec" worker
 // runs the user's binary and is killed + replaced when a test hits the time limit.
@@ -77,10 +79,42 @@ export function normalize(s: string): string[] {
   return lines;
 }
 
-export type Checker = 'exact' | 'lines-any-order';
+/** exact: line by line · lines-any-order: ignore line order · float: numbers may differ by max(1e-4, 1e-7 relative)
+ *  (the grader prints 4 decimals and accepts 0.00001% error, so 1e-4 absolute covers the rounding of the expected value) */
+export type Checker = 'exact' | 'lines-any-order' | 'float' | 'custom';
 
-export function compareOutput(expected: string, got: string, checker: Checker = 'exact'): TestResult['firstDiff'] | null {
+const NUM = /^[+-]?(\d+\.?\d*|\.\d+)([eE][+-]?\d+)?$/;
+function sameLineFloat(x: string, y: string): boolean {
+  if (x === y) return true;
+  const p = x.split(/\s+/), q = y.split(/\s+/);
+  if (p.length !== q.length) return false;
+  return p.every((t, i) => {
+    if (t === q[i]) return true;
+    if (!NUM.test(t) || !NUM.test(q[i])) return false;
+    const u = +t, v = +q[i];
+    return Math.abs(u - v) <= Math.max(1e-4, 1e-7 * Math.max(Math.abs(u), Math.abs(v)));
+  });
+}
+
+export function compareOutput(
+  expected: string, got: string, checker: Checker = 'exact',
+  ctx?: { input: string; validator?: string },
+): TestResult['firstDiff'] | null {
+  if (checker === 'custom') {
+    // Several answers are correct: a validator checks the output against the input instead.
+    const v = ctx?.validator ? validators[ctx.validator] : undefined;
+    return v ? v(ctx!.input, got) : { line: -1, expected: 'ตัวตรวจของข้อนี้', got: 'ไม่พบตัวตรวจ' };
+  }
   let a = normalize(expected), b = normalize(got);
+  if (checker === 'float') {
+    const n = Math.max(a.length, b.length);
+    for (let i = 0; i < n; i++) {
+      if (a[i] === undefined || b[i] === undefined || !sameLineFloat(a[i], b[i])) {
+        return { line: i + 1, expected: a[i] ?? '(ไม่มีบรรทัดนี้)', got: b[i] ?? '(ไม่มีบรรทัดนี้)' };
+      }
+    }
+    return null;
+  }
   if (checker === 'lines-any-order') {
     // Order doesn't matter: compare as sorted multisets of lines.
     a = [...a].sort(); b = [...b].sort();
@@ -139,6 +173,7 @@ class CppRunner {
     onResult: (r: TestResult) => void,
     timeLimitMs = 2000,
     checker: Checker = 'exact',
+    validator?: string,
   ): Promise<TestResult[]> {
     const key = ++this.key;
     const results: TestResult[] = [];
@@ -164,7 +199,7 @@ class CppRunner {
         if (r.error) {
           result = { index: i, verdict: 'RE', ms, stdout, error: explainError(r.error) };
         } else {
-          const diff = compareOutput(t.output, stdout, checker);
+          const diff = compareOutput(t.output, stdout, checker, { input: t.input, validator });
           result = diff
             ? { index: i, verdict: 'WA', ms, stdout, firstDiff: diff }
             : { index: i, verdict: 'AC', ms, stdout };

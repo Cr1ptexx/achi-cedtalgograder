@@ -41,6 +41,10 @@ import type { Checker } from '../runner/cppRunner';
 /** Shape of public/tests/<code>.json */
 export type TestFile = {
   checker: Checker;
+  /** name in src/runner/validators.ts, when checker === 'custom' */
+  validator?: string;
+  /** tests left out because they are too heavy for the in-browser runner */
+  dropped?: number;
   tests: (TestCase & { source: 'sample' | 'grader' | 'generated' })[];
 };
 
@@ -56,7 +60,7 @@ export type Chapter = {
   blurb: string;
   ready: boolean;
   concepts: ConceptCard[];
-  visualizer?: 'permutation' | 'sorting';
+  visualizer?: 'permutation' | 'sorting' | 'master' | 'dandc' | 'dp' | 'greedy' | 'graph' | 'shortest' | 'queens' | 'growth';
   quiz: QuizItem[];
   complexity: { name: string; time: string; note: string }[];
   pitfalls: string[];

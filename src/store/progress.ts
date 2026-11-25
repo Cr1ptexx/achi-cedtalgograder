@@ -39,3 +39,7 @@ export function useProgressVersion(): number {
     () => version,
   );
 }
+
+/** LeetCode practice items the user has ticked off (links only; we never see their LeetCode account). */
+export function isLcDone(slug: string): boolean { return read(`lc:${slug}`) === '1'; }
+export function setLcDone(slug: string, done: boolean) { write(`lc:${slug}`, done ? '1' : '0'); }
