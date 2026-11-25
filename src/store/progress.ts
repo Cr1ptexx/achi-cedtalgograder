@@ -23,7 +23,9 @@ export function getStatus(code: string): Status {
 }
 
 export function markResult(code: string, allPassed: boolean) {
+  logEvent(allPassed ? 'ac' : 'sub', code);
   if (getStatus(code) === 'solved') return; // never downgrade
+  if (allPassed) write(`solvedAt:${code}`, String(Date.now()));
   write(`status:${code}`, allPassed ? 'solved' : 'tried');
 }
 
@@ -42,4 +44,29 @@ export function useProgressVersion(): number {
 
 /** LeetCode practice items the user has ticked off (links only; we never see their LeetCode account). */
 export function isLcDone(slug: string): boolean { return read(`lc:${slug}`) === '1'; }
-export function setLcDone(slug: string, done: boolean) { write(`lc:${slug}`, done ? '1' : '0'); }
+export function setLcDone(slug: string, done: boolean) {
+  if (done && !isLcDone(slug)) logEvent('lc', slug);
+  write(`lc:${slug}`, done ? '1' : '0');
+}
+
+// ---------- activity log (feeds the heat map on the progress page) ----------
+// One entry per action: [timestamp ms, kind, id]. Capped so storage stays small.
+export type LogKind = 'sub' | 'ac' | 'lc' | 'quiz';
+export type LogEntry = [number, LogKind, string];
+const LOG_CAP = 4000;
+
+export function getLog(): LogEntry[] {
+  try {
+    const v = JSON.parse(read('log') ?? '[]');
+    return Array.isArray(v) ? (v as LogEntry[]) : [];
+  } catch { return []; }
+}
+export function logEvent(kind: LogKind, id: string) {
+  const log = getLog();
+  log.push([Date.now(), kind, id]);
+  write('log', JSON.stringify(log.slice(-LOG_CAP)));
+}
+export function solvedAt(code: string): number | null {
+  const v = Number(read(`solvedAt:${code}`));
+  return v > 0 ? v : null;
+}

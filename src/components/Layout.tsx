@@ -32,6 +32,7 @@ export default function Layout() {
         <nav>
           <NavLink to="/" end>บทเรียน</NavLink>
           <NavLink to="/plan">แผนการเรียน</NavLink>
+          <NavLink to="/progress">ความก้าวหน้า</NavLink>
         </nav>
         <button className="theme-toggle" onClick={toggle} aria-label={theme === 'dark' ? 'เปลี่ยนเป็นธีมสว่าง' : 'เปลี่ยนเป็นธีมมืด'} title="สลับธีม">
           {theme === 'dark' ? '☀' : '☾'}

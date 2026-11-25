@@ -1,5 +1,6 @@
 import { useState } from 'react';
 import type { QuizItem } from '../data/types';
+import { logEvent } from '../store/progress';
 
 function Question({ item, n }: { item: QuizItem; n: number }) {
   const [pick, setPick] = useState<number | null>(null);
@@ -11,7 +12,7 @@ function Question({ item, n }: { item: QuizItem; n: number }) {
         {item.choices.map((c, k) => {
           const state = !answered ? '' : k === item.answer ? 'right' : k === pick ? 'wrong' : 'off';
           return (
-            <button key={k} className={`choice ${state}`} disabled={answered} onClick={() => setPick(k)}>
+            <button key={k} className={`choice ${state}`} disabled={answered} onClick={() => { setPick(k); if (k === item.answer) logEvent('quiz', item.q.slice(0, 40)); }}>
               {c}
             </button>
           );
