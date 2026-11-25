@@ -81,3 +81,7 @@ npm run build    # static files in dist/
 ## ที่มาของเนื้อหา
 
 โจทย์และชุดทดสอบมาจาก grader ของวิชา (cedt-grader.nattee.net) คำอธิบายแนวคิดเขียนใหม่ด้วยคำของผู้จัดทำ
+
+## ฝึกในเครื่องด้วย VS Code
+
+`node scripts/make-practice.mjs [โฟลเดอร์ปลายทาง] [โฟลเดอร์ workspace]` สร้างโฟลเดอร์ฝึกครบทุกข้อ (ไฟล์ `.cpp` เริ่มต้น, `statement.pdf`, `tests/`) พร้อมตัวตรวจในเครื่อง `judge.mjs`, tasks ของ VS Code และการผูกไฟล์กับ problem id สำหรับส่วนขยาย cedt-grader-submit ไม่เขียนทับไฟล์เฉลยที่มีอยู่แล้ว (ต้องมี `_source/statements/` ซึ่งไม่ขึ้น git)
