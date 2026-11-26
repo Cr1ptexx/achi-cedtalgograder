@@ -676,3 +676,9 @@ a.ticket:hover { border-color: var(--pen); }
 .redo-btn.on { background: var(--marker-soft); border-color: var(--marker); color: var(--marker-ink); }
 .prob-row .score { margin-right: 6px; }
 @media (max-width: 760px) { .w-score { width: 62px; } .score { min-width: 46px; } }
+
+/* ---------- v0.3.0: original statement PDF ---------- */
+.stmt-tabs { margin: 12px 0 10px; }
+.pdf-box { display: grid; gap: 8px; }
+.pdf-frame { width: 100%; height: min(70vh, 720px); min-height: 420px; border: 1px solid var(--border); border-radius: var(--r-sm); background: #fff; }
+.pdf-links { display: flex; gap: 10px; align-items: center; flex-wrap: wrap; }

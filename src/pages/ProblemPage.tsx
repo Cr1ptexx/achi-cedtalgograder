@@ -21,6 +21,12 @@ const VERDICT: Record<TestResult['verdict'], string> = {
 const isMac = typeof navigator !== 'undefined' && /Mac|iPhone|iPad/.test(navigator.platform);
 const MOD = isMac ? '⌘' : 'Ctrl';
 
+// Where the original PDF is known to be wrong, so nobody loses time on it.
+const PDF_NOTES: Record<string, string> = {
+  a62_q2a_line_graph: 'หมายเหตุ: ตัวอย่างหนึ่งใน PDF ต้นฉบับระบุคำตอบ 2 แต่ 2-3-4 เป็นวงสามเหลี่ยม (ไม่ใช่กราฟเส้นตรง) คำตอบที่ถูกคือ 1 ซึ่งตรงกับเทสของ grader รายการตัวอย่างด้านล่างใช้ค่านี้',
+  ex00e5: 'หมายเหตุ: ตัวอย่างใน PDF ต้นฉบับพิมพ์ผลลัพธ์ไม่ครบ รายการตัวอย่างด้านล่างเป็นฉบับที่ตรงกับเทสของ grader',
+};
+
 export default function ProblemPage() {
   const { code = '' } = useParams();
   const p = problemByCode.get(code);
@@ -35,6 +41,7 @@ export default function ProblemPage() {
   const [failedOnce, setFailedOnce] = useState(false);
   const [hintsShown, setHintsShown] = useState(0);
   const [tab, setTab] = useState<Tab>('results');
+  const [stmtTab, setStmtTab] = useState<'pdf' | 'summary'>('pdf');
   const [customIn, setCustomIn] = useState('');
   const [customOut, setCustomOut] = useState<{ text: string; note: string; bad: boolean } | null>(null);
   const saveTimer = useRef<ReturnType<typeof setTimeout>>(undefined);
@@ -157,15 +164,31 @@ export default function ProblemPage() {
         </div>
         <RatingLine code={p.code} />
 
-        {p.statement ? (
+        <div className="seg stmt-tabs" role="tablist" aria-label="รูปแบบโจทย์">
+          <button role="tab" aria-selected={stmtTab === 'pdf'} className={stmtTab === 'pdf' ? 'on' : ''} onClick={() => setStmtTab('pdf')}>โจทย์จริง (PDF)</button>
+          <button role="tab" aria-selected={stmtTab === 'summary'} className={stmtTab === 'summary' ? 'on' : ''} onClick={() => setStmtTab('summary')}>สรุปโดยย่อ</button>
+        </div>
+
+        {stmtTab === 'pdf' ? (
+          <div className="pdf-box">
+            <iframe key={p.code} className="pdf-frame" title={`โจทย์ ${p.title} (ไฟล์ต้นฉบับ)`}
+              src={`${import.meta.env.BASE_URL}statements/${p.code}.pdf#view=FitH&toolbar=0`} />
+            <div className="pdf-links small">
+              <a href={`${import.meta.env.BASE_URL}statements/${p.code}.pdf`} target="_blank" rel="noreferrer">เปิด PDF เต็มหน้าจอ ↗</a>
+              <span className="muted">ถ้าไม่ขึ้นในกรอบ (เช่น บนมือถือ) ให้กดลิงก์นี้</span>
+            </div>
+            {PDF_NOTES[p.code] && <div className="notice">{PDF_NOTES[p.code]}</div>}
+          </div>
+        ) : p.statement ? (
           <div className="statement">
             <h3>โจทย์</h3><p>{p.statement.task}</p>
             <h3>ข้อมูลนำเข้า</h3><p>{p.statement.input}</p>
             <h3>ข้อมูลส่งออก</h3><p>{p.statement.output}</p>
             {p.statement.constraints && (<><h3>ขอบเขต</h3><p>{p.statement.constraints}</p></>)}
+            <p className="muted small">สรุปโดยผู้จัดทำเว็บ ใช้ฉบับ PDF เป็นหลักเมื่อมีข้อสงสัย</p>
           </div>
         ) : (
-          <div className="notice">ข้อนี้ยังไม่มีสรุปโจทย์ในเว็บ อ่านโจทย์ฉบับเต็มบน grader แล้วกลับมาเขียนและตรวจที่นี่ได้</div>
+          <div className="notice">ข้อนี้ยังไม่มีสรุปโจทย์ในเว็บ ดูโจทย์จริงที่แท็บ PDF</div>
         )}
 
         <h3>ตัวอย่าง</h3>
