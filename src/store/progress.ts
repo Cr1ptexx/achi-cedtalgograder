@@ -22,8 +22,9 @@ export function getStatus(code: string): Status {
   return v === 'solved' || v === 'tried' ? v : 'todo';
 }
 
-export function markResult(code: string, allPassed: boolean) {
+export function markResult(code: string, allPassed: boolean, passed = allPassed ? 1 : 0, total = 1) {
   logEvent(allPassed ? 'ac' : 'sub', code);
+  saveBestScore(code, passed, total);
   if (getStatus(code) === 'solved') return; // never downgrade
   if (allPassed) write(`solvedAt:${code}`, String(Date.now()));
   write(`status:${code}`, allPassed ? 'solved' : 'tried');
@@ -74,3 +75,23 @@ export function solvedAt(code: string): number | null {
   const v = Number(read(`solvedAt:${code}`));
   return v > 0 ? v : null;
 }
+
+// ---------- score: how many test cases passed (best submission) ----------
+export type Score = { passed: number; total: number };
+export function getScore(code: string): Score | null {
+  const m = (read(`score:${code}`) ?? '').match(/^(\d+)\/(\d+)$/);
+  return m && +m[2] > 0 ? { passed: +m[1], total: +m[2] } : null;
+}
+function saveBestScore(code: string, passed: number, total: number) {
+  if (total <= 0) return;
+  const cur = getScore(code);
+  // keep the best ratio; a changed test count (new tests added later) is compared by ratio
+  if (cur && cur.passed / cur.total >= passed / total) return;
+  write(`score:${code}`, `${passed}/${total}`);
+}
+
+// ---------- redo mark and a private note about what went wrong ----------
+export function getRedo(code: string): boolean { return read(`redo:${code}`) === '1'; }
+export function setRedo(code: string, on: boolean) { write(`redo:${code}`, on ? '1' : '0'); }
+export function getNote(code: string): string { return read(`note:${code}`) ?? ''; }
+export function setNote(code: string, text: string) { write(`note:${code}`, text); }

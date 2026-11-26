@@ -75,3 +75,7 @@ export function ratingOf(code: string): Rating | null {
   const stars = Math.min(3, Math.max(1, Math.round(score))) as Level;
   return { level, tries, people, lowSample: people < SMALL_SAMPLE, stars, source: src.label, reasons };
 }
+
+/** Order for problem lists: easiest first (fewest tries per person on the grader), unknown last. */
+export const byEase = (a: { code: string }, b: { code: string }) =>
+  (ratingOf(a.code)?.tries ?? 99) - (ratingOf(b.code)?.tries ?? 99);

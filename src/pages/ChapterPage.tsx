@@ -9,7 +9,8 @@ import { getStatus, isLcDone, setLcDone, useProgressVersion } from '../store/pro
 import { leetcodeByChapter, type LeetCodeItem } from '../data/leetcode';
 import StatusDot from '../components/StatusDot';
 import { DifficultyBadge, WorthStars } from '../components/Difficulty';
-import { ratingOf } from '../data/ratings';
+import { byEase, ratingOf } from '../data/ratings';
+import { RedoMark, ScoreChip } from '../components/ScoreChip';
 
 const viz = {
   permutation: lazy(() => import('../components/PermutationViz')),
@@ -51,7 +52,7 @@ export default function ChapterPage() {
   }, [slug]);
 
   if (!ch) return <p>ไม่พบบทนี้ <Link to="/">กลับหน้าแรก</Link></p>;
-  const probs = catalog.filter((p) => p.chapter === ch.slug);
+  const probs = catalog.filter((p) => p.chapter === ch.slug).sort(byEase);   // easiest first
   const lc = leetcodeByChapter[ch.slug] ?? [];
   const ci = chapters.findIndex((c) => c.slug === ch.slug);
   const prevCh = chapters[ci - 1], nextCh = chapters[ci + 1];
@@ -194,7 +195,8 @@ function ProblemList({ probs }: { probs: typeof catalog }) {
         const info = (
           <>
             <StatusDot status={getStatus(p.code)} />
-            <div className="grow"><div className="prob-title">{p.title}</div><div className="muted small">{ratingOf(p.code)?.source ?? p.code}</div></div>
+            <div className="grow"><div className="prob-title">{p.title} <RedoMark code={p.code} showNote={false} /></div><div className="muted small">{ratingOf(p.code)?.source ?? p.code}</div></div>
+            <ScoreChip code={p.code} />
             <div className="prob-rate"><DifficultyBadge code={p.code} /><WorthStars code={p.code} /></div>
           </>
         );

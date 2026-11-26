@@ -657,3 +657,22 @@ a.ticket:hover { border-color: var(--pen); }
 .ch-pager a { padding: 10px 16px; border: 1px solid var(--border); border-radius: var(--r-md); background: var(--surface); text-decoration: none; font-weight: 600; }
 .ch-pager a:hover { border-color: var(--pen); }
 .ch-pager a.next { background: var(--pen); border-color: var(--pen); color: var(--surface); margin-left: auto; }
+
+/* ---------- v0.3.0: score, redo mark, notes ---------- */
+.w-score { width: 108px; }
+.score { display: inline-grid; gap: 4px; justify-items: start; min-width: 64px; font-size: 0.86rem; }
+.score b { font: 600 0.88rem var(--mono); }
+.score i { display: block; width: 100%; height: 5px; border-radius: 999px; background: var(--surface-2); overflow: hidden; border: 1px solid var(--border); }
+.score u { display: block; height: 100%; text-decoration: none; background: var(--marker); }
+.score.full b { color: var(--green); }
+.score.full u { background: var(--green); }
+.score.zero b { color: var(--red); }
+.score.none { color: var(--muted); }
+.redo-tag { display: inline-block; font-size: 0.76rem; font-weight: 600; padding: 1px 8px; border-radius: 999px; background: var(--marker-soft); color: var(--marker-ink); border: 1px solid var(--marker); white-space: nowrap; }
+.note-line { color: var(--muted); font-style: italic; margin-top: 2px; }
+.review-box { margin-top: 16px; padding: 14px; border: 1px dashed var(--border); border-radius: var(--r-md); display: grid; gap: 8px; }
+.review-head { display: flex; justify-content: space-between; align-items: center; gap: 10px; flex-wrap: wrap; }
+.review-note { width: 100%; resize: vertical; font-size: 0.92rem; }
+.redo-btn.on { background: var(--marker-soft); border-color: var(--marker); color: var(--marker-ink); }
+.prob-row .score { margin-right: 6px; }
+@media (max-width: 760px) { .w-score { width: 62px; } .score { min-width: 46px; } }

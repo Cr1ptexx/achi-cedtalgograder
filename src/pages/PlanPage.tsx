@@ -3,19 +3,20 @@ import { useState } from 'react';
 import { catalog, GRADER_BASE } from '../data/catalog';
 import { chapters, chapterBySlug } from '../data/chapters';
 import { problemByCode } from '../data/problems';
-import { ratingOf, STATS_DATE, type Level } from '../data/ratings';
+import { byEase, ratingOf, STATS_DATE, type Level } from '../data/ratings';
 import type { CatalogEntry } from '../data/types';
-import { getStatus, isLcDone, useProgressVersion, type Status } from '../store/progress';
+import { getRedo, getStatus, isLcDone, useProgressVersion, type Status } from '../store/progress';
 import { leetcodeByChapter } from '../data/leetcode';
 import StatusDot from '../components/StatusDot';
 import { DifficultyBadge, WorthStars } from '../components/Difficulty';
+import { RedoMark, ScoreChip } from '../components/ScoreChip';
 
 const EXAM = { slug: 'exam', num: '★', title: 'ข้อสอบปลายภาคเก่า', thaiTitle: 'รวมหลายบท ปี 66–68' };
 type Sort = 'chapter' | 'worth' | 'easy';
 
 export default function PlanPage() {
   useProgressVersion();
-  const [status, setStatus] = useState<'all' | Status>('all');
+  const [status, setStatus] = useState<'all' | 'redo' | Status>('all');
   const [level, setLevel] = useState<0 | Level>(0);
   const [sort, setSort] = useState<Sort>('chapter');
 
@@ -25,7 +26,7 @@ export default function PlanPage() {
   const solved = catalog.filter((p) => getStatus(p.code) === 'solved').length;
   const tried = catalog.filter((p) => getStatus(p.code) === 'tried').length;
   const pass = (p: CatalogEntry) =>
-    (status === 'all' || getStatus(p.code) === status) && (level === 0 || ratingOf(p.code)?.level === level);
+    (status === 'all' || (status === 'redo' ? getRedo(p.code) : getStatus(p.code) === status)) && (level === 0 || ratingOf(p.code)?.level === level);
   const visible = catalog.filter(pass);
 
   return (
@@ -40,9 +41,9 @@ export default function PlanPage() {
 
         <div className="filters">
           <div className="seg" role="group" aria-label="กรองตามสถานะ">
-            {(['all', 'todo', 'tried', 'solved'] as const).map((f) => (
+            {(['all', 'todo', 'tried', 'solved', 'redo'] as const).map((f) => (
               <button key={f} className={status === f ? 'on' : ''} onClick={() => setStatus(f)}>
-                {{ all: 'ทุกสถานะ', todo: 'ยังไม่ทำ', tried: 'ลองแล้ว', solved: 'ผ่านแล้ว' }[f]}
+                {{ all: 'ทุกสถานะ', todo: 'ยังไม่ทำ', tried: 'ลองแล้ว', solved: 'ผ่านแล้ว', redo: '↻ ทำซ้ำ' }[f]}
               </button>
             ))}
           </div>
@@ -76,7 +77,7 @@ export default function PlanPage() {
 
       {sort === 'chapter' ? (
         [...chapters.filter((c) => catalog.some((p) => p.chapter === c.slug)), EXAM].map((g) => {
-          const items = visible.filter((p) => p.chapter === g.slug);
+          const items = visible.filter((p) => p.chapter === g.slug).sort(byEase);   // easiest first
           if (!items.length) return null;
           return (
             <section key={g.slug} className="plan-group">
@@ -109,6 +110,7 @@ function PlanTable({ items, showChapter = false }: { items: CatalogEntry[]; show
         <tr>
           <th className="w-dot"><span className="sr-only">สถานะ</span></th>
           <th>โจทย์</th>
+          <th className="w-score">คะแนนเทส</th>
           <th className="w-lvl">ความยาก</th>
           <th className="w-worth">น่าทำ</th>
           <th className="w-go"><span className="sr-only">ทำที่ไหน</span></th>
@@ -125,8 +127,11 @@ function PlanTable({ items, showChapter = false }: { items: CatalogEntry[]; show
                 {built ? <Link to={`/p/${p.code}`} className="prob-title">{p.title}</Link> : <span className="prob-title">{p.title}</span>}
                 <div className="small muted">
                   {showChapter && ch && p.chapter !== 'exam' ? `บท ${ch.num} ${ch.title}, ` : ''}{ratingOf(p.code)?.source}
+                  {' '}<RedoMark code={p.code} showNote={false} />
                 </div>
+                <RedoMark code={p.code} showTag={false} />
               </td>
+              <td className="w-score"><ScoreChip code={p.code} /></td>
               <td className="w-lvl"><DifficultyBadge code={p.code} /></td>
               <td className="w-worth"><WorthStars code={p.code} /></td>
               <td className="w-go right">

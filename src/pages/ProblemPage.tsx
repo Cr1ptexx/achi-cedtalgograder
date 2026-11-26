@@ -9,6 +9,7 @@ import { runner, type Checker, type TestCase, type TestResult } from '../runner/
 import type { TestFile } from '../data/types';
 import { loadCode, markResult, saveCode } from '../store/progress';
 import { DifficultyBadge, WorthStars } from '../components/Difficulty';
+import ReviewBox from '../components/ReviewBox';
 import { ratingOf } from '../data/ratings';
 
 type Phase = 'idle' | 'loading' | 'compiling' | 'running' | 'done' | 'ce';
@@ -75,14 +76,14 @@ export default function ProblemPage() {
     setPhase(compilerReady ? 'compiling' : 'loading');
     try {
       const c = await runner.compile(src);
-      if (!c.ok) { setLog(c.log); setPhase('ce'); setFailedOnce(true); if (isSubmit) markResult(p.code, false); return; }
+      if (!c.ok) { setLog(c.log); setPhase('ce'); setFailedOnce(true); if (isSubmit) markResult(p.code, false, 0, tests.length); return; }
       setLog(c.log);
       setPhase('running');
       const rs = await runner.runTests(c.wasm, tests, (r) => setResults((prev) => [...prev, r]), p.timeLimitMs, checker, validator);
       setPhase('done');
       const allOk = rs.every((r) => r.verdict === 'AC');
       if (!allOk) setFailedOnce(true);
-      if (isSubmit) markResult(p.code, allOk);
+      if (isSubmit) markResult(p.code, allOk, rs.filter((r) => r.verdict === 'AC').length, rs.length);
       const firstBad = rs.find((r) => r.verdict !== 'AC');
       if (firstBad) setOpen(firstBad.index);
     } catch (e) {
@@ -208,6 +209,8 @@ export default function ProblemPage() {
             )}
           </div>
         )}
+
+        <ReviewBox key={p.code} code={p.code} />
       </section>
 
       <section className="ide-right">
