@@ -8,12 +8,33 @@
 const BASE = 'https://binji.github.io/wasm-clang/';
 importScripts(BASE + 'shared.js');
 
+// shared.js leaves the WASI clock unimplemented (it throws), so time(0), clock() and
+// std::chrono::*::now() crash. Students use them to seed random generators, so we hook
+// instantiation and supply a real clock in nanoseconds. App is private to shared.js,
+// hence the hook on WebAssembly.instantiate instead of on its prototype.
+const realInstantiate = WebAssembly.instantiate.bind(WebAssembly);
+WebAssembly.instantiate = async (mod, imports) => {
+  let memory = null;
+  if (imports && imports.wasi_unstable) {
+    imports.wasi_unstable.clock_time_get = (clockId, _precision, timeOut) => {
+      const ns = BigInt(Math.round(clockId === 0 ? Date.now() * 1e6 : performance.now() * 1e6));
+      new DataView(memory.buffer).setBigUint64(timeOut, ns, true);
+      return 0;
+    };
+  }
+  const res = await realInstantiate(mod, imports);
+  memory = (res.instance || res).exports.memory;
+  return res;
+};
+
 const STDCXX = [
-  'algorithm', 'array', 'bitset', 'cassert', 'cctype', 'climits', 'cmath',
-  'cstdio', 'cstdlib', 'cstring', 'deque', 'functional', 'iomanip',
-  'iostream', 'iterator', 'limits', 'list', 'map', 'numeric', 'queue',
-  'set', 'sstream', 'stack', 'string', 'tuple', 'unordered_map',
-  'unordered_set', 'utility', 'vector',
+  // roughly what GCC's <bits/stdc++.h> pulls in, minus threads/locale which wasi lacks
+  'algorithm', 'array', 'bitset', 'cassert', 'cctype', 'cfloat', 'chrono', 'cinttypes', 'climits', 'cmath',
+  'complex', 'cstddef', 'cstdint', 'cstdio', 'cstdlib', 'cstring', 'ctime', 'deque', 'exception',
+  'fstream', 'functional', 'initializer_list', 'iomanip', 'ios', 'iostream', 'istream', 'iterator',
+  'limits', 'list', 'map', 'memory', 'numeric', 'ostream', 'queue', 'random', 'ratio', 'set',
+  'sstream', 'stack', 'stdexcept', 'string', 'tuple', 'type_traits', 'unordered_map',
+  'unordered_set', 'utility', 'valarray', 'vector',
 ].map((h) => `#include <${h}>`).join('\n') + '\n';
 
 let out = '';
@@ -55,6 +76,13 @@ async function init(m) {
     // libc++ has no <bits/stdc++.h>, but students use it everywhere.
     try { api.memfs.addDirectory('include/bits'); } catch { /* exists */ }
     api.memfs.addFile('include/bits/stdc++.h', STDCXX);
+    // GCC's __gcd accepts signed ints; libc++ 8 has a std::__gcd that static_asserts unsigned,
+    // so "__gcd(a, b)" with ints fails to compile. Drop that assert (the math is fine for signed).
+    try {
+      const path = 'include/c++/v1/numeric';
+      const text = new TextDecoder().decode(api.memfs.getFileContents(path));
+      api.memfs.addFile(path, text.replace('static_assert((!is_signed<_Tp>::value), "");', ''));
+    } catch { /* keep the original header */ }
     await api.getModule(api.clangFilename);
     await api.getModule(api.lldFilename);
   }
@@ -82,7 +110,11 @@ async function compile(code) {
   try {
     await api.run(lld, 'wasm-ld', '--no-threads', '--export-dynamic',
       '-z', `stack-size=${8 * 1024 * 1024}`, `-L${lib}`, `${lib}/crt1.o`, obj,
-      '-lc', '-lc++', '-lc++abi', '-lcanvas', '-o', wasm);
+      '-lc++', '-lc++abi', '-lc-printscan-long-double', '-lc', '-lcanvas',
+      // compiler-rt: long double (128-bit on wasm32) and __int128 helpers such as __lttf2 / __multi3.
+      // libc++'s algorithm.cpp needs them as soon as std::sort is used.
+      'lib/clang/8.0.1/lib/wasi/libclang_rt.builtins-wasm32.a',
+      '-o', wasm);
   } catch (e) { /* link errors are in `out` */ }
   let bin;
   try { bin = api.memfs.getFileContents(wasm); } catch { bin = null; }

@@ -133,6 +133,18 @@ export function compareOutput(
   return null;
 }
 
+/** Add a Thai note under compile errors that come from the in-browser toolchain, not from the student's logic. */
+export function explainCompileError(log: string): string {
+  const notes: string[] = [];
+  if (/exceptions disabled/.test(log)) {
+    notes.push('ตัวคอมไพล์ในเบราว์เซอร์ปิด exception ไว้ (ใช้ try / catch / throw ไม่ได้) ให้เช็กเงื่อนไขด้วย if แทน บน grader จริงใช้ได้ตามปกติ');
+  }
+  if (/undefined symbol/.test(log)) {
+    notes.push('ลิงก์ไม่ผ่านเพราะฟังก์ชันนี้ไม่มีในไลบรารีของตัวคอมไพล์ในเบราว์เซอร์ ลองส่งบน grader ได้ และแจ้งผู้ทำเว็บพร้อมโค้ดได้');
+  }
+  return notes.length ? `${log}\n\n※ ${notes.join('\n※ ')}` : log;
+}
+
 /** Turn raw WebAssembly trap messages into something a student can act on. */
 export function explainError(raw: string): string {
   const m = raw.match(/exited with code (\d+)/);
@@ -164,7 +176,7 @@ class CppRunner {
   async compile(code: string): Promise<CompileResult> {
     await this.warmUp();
     const r = await this.compiler!.call({ type: 'compile', code });
-    return r.ok && r.wasm ? { ok: true, wasm: r.wasm, log: r.log ?? '' } : { ok: false, log: r.log ?? '' };
+    return r.ok && r.wasm ? { ok: true, wasm: r.wasm, log: r.log ?? '' } : { ok: false, log: explainCompileError(r.log ?? '') };
   }
 
   async runTests(
