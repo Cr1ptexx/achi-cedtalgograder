@@ -4,6 +4,8 @@
 // [total submissions, people who attempted]. Submissions per person is a
 // difficulty proxy: hard problems take more tries before they pass.
 
+import { ANALYSIS } from './analysis';
+
 export const STATS_DATE = '24 พ.ย. 2569';
 
 const STATS: Record<string, [number, number]> = {
@@ -42,7 +44,9 @@ export type Level = 1 | 2 | 3;
 export const LEVEL_NAME: Record<Level, string> = { 1: 'ง่าย', 2: 'กลาง', 3: 'ยาก' };
 
 export type Rating = {
-  level: Level;
+  level: Level;         // from analysing the problem itself (see analysis.ts)
+  statLevel: Level;     // from grader submission statistics, kept for reference
+  why: string;          // one-line reason for the level
   tries: number;        // average submissions per person
   people: number;
   lowSample: boolean;   // too few people for the difficulty to be reliable
@@ -79,16 +83,19 @@ export function ratingOf(code: string): Rating | null {
   const [subs, people] = s;
   // Round first so the shown number (1 decimal) always matches the level.
   const tries = Math.round((subs / people) * 10) / 10;
-  const level: Level = tries < 2.7 ? 1 : tries <= 4 ? 2 : 3;
+  const statLevel: Level = tries < 2.7 ? 1 : tries <= 4 ? 2 : 3;
+  const a = ANALYSIS[code];
+  const level: Level = a ? a.level : statLevel;
   const src = source(code);
   const reasons = [src.label];
   let score = src.score;
   if (people >= 500) { score += 0.5; reasons.push(`เพื่อนฝึกเยอะ (${people} คน)`); }
   else if (people < 150) { score -= 0.5; reasons.push(`คนฝึกน้อย (${people} คน)`); }
   const stars = Math.min(3, Math.max(1, Math.round(score))) as Level;
-  return { level, tries, people, lowSample: people < SMALL_SAMPLE, stars, source: src.label, reasons };
+  return { level, statLevel, why: a ? a.why : '', tries, people, lowSample: people < SMALL_SAMPLE, stars, source: src.label, reasons };
 }
 
 /** Order for problem lists: easiest first (fewest tries per person on the grader), unknown last. */
 export const byEase = (a: { code: string }, b: { code: string }) =>
+  (ratingOf(a.code)?.level ?? 9) - (ratingOf(b.code)?.level ?? 9) ||
   (ratingOf(a.code)?.tries ?? 99) - (ratingOf(b.code)?.tries ?? 99);

@@ -4,11 +4,11 @@ import { LEVEL_NAME, ratingOf, type Level } from '../data/ratings';
 export function DifficultyBadge({ code, showWord = true }: { code: string; showWord?: boolean }) {
   const r = ratingOf(code);
   if (!r) return null;
-  const tip = `${LEVEL_NAME[r.level]}: เฉลี่ยส่ง ${r.tries.toFixed(1)} ครั้งต่อคน จาก ${r.people} คนที่ลองบน grader${r.lowSample ? ' (คนลองน้อย ค่านี้อาจไม่แม่น)' : ''}`;
+  const tip = `${LEVEL_NAME[r.level]}: ${r.why || 'ประเมินจากสถิติบน grader'} · เพื่อนส่งเฉลี่ย ${r.tries.toFixed(1)} ครั้งต่อคน (${r.people} คน)`;
   return (
     <span className={`lvl lvl-${r.level}`} title={tip} aria-label={tip}>
       <span className="diff" aria-hidden="true">{[1, 2, 3].map((k) => <i key={k} className={k <= r.level ? 'on' : ''} />)}</span>
-      {showWord && <span className="lvl-word">{LEVEL_NAME[r.level]}{r.lowSample ? '?' : ''}</span>}
+      {showWord && <span className="lvl-word">{LEVEL_NAME[r.level]}</span>}
     </span>
   );
 }

@@ -1,6 +1,6 @@
 import { catalog } from './catalog';
 import { chapters } from './chapters';
-import { ratingOf } from './ratings';
+import { byEase, ratingOf } from './ratings';
 import type { CatalogEntry, Chapter } from './types';
 import { getFlag, getStatus } from '../store/progress';
 import { BIGO_DRILLS } from './bigo-drills';
@@ -34,7 +34,6 @@ export function dateLabel(iso: string): string {
 // ---------- exam 1: grader ----------
 export type GraderStage = { chapter: Chapter | null; slug: string; num: string; title: string; thaiTitle: string; items: CatalogEntry[] };
 
-const byEase = (a: CatalogEntry, b: CatalogEntry) => (ratingOf(a.code)?.tries ?? 9) - (ratingOf(b.code)?.tries ?? 9);
 const stars = (p: CatalogEntry) => ratingOf(p.code)?.stars ?? 0;
 
 export const PICKS_PER_CHAPTER = 3;

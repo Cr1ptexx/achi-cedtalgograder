@@ -341,7 +341,7 @@ function RatingLine({ code }: { code: string }) {
   if (!r) return null;
   return (
     <div className="rating-line">
-      <div><DifficultyBadge code={code} /><span className="small muted">เพื่อนส่งเฉลี่ยคนละ {r.tries.toFixed(1)} ครั้ง ({r.people} คน)</span></div>
+      <div><DifficultyBadge code={code} /><span className="small muted">{r.why ? `${r.why} · ` : ''}เพื่อนส่งเฉลี่ยคนละ {r.tries.toFixed(1)} ครั้ง ({r.people} คน)</span></div>
       <div><WorthStars code={code} /><span className="small muted">{r.reasons.join(', ')}</span></div>
     </div>
   );

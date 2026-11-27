@@ -4,6 +4,7 @@ import Home from './pages/Home';
 import ChapterPage from './pages/ChapterPage';
 import PlanPage from './pages/PlanPage';
 import ExamPage from './pages/ExamPage';
+import AssignedPage from './pages/AssignedPage';
 import { lazy, Suspense } from 'react';
 
 // The editor (CodeMirror) is the heaviest dependency — load it only on problem pages.
@@ -17,6 +18,7 @@ export default function App() {
         <Route element={<Layout />}>
           <Route index element={<Home />} />
           <Route path="exam" element={<ExamPage />} />
+          <Route path="assigned" element={<AssignedPage />} />
           <Route path="plan" element={<PlanPage />} />
           <Route path="progress" element={<Navigate to="/" replace />} />
           <Route path="ch/:slug" element={<ChapterPage />} />

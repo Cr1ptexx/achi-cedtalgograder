@@ -5,16 +5,44 @@
 
 > ใช้เพื่อการศึกษา สำหรับวิชา Data Structures and Algorithms ของ CEDT (use for educational purpose)
 
+## How this project was built
+
+I made Algo Lab to study for my university algorithms course. I defined what it should do, decided
+the scope and the data it uses, tested it against my own coursework and reported the bugs I found.
+The implementation was done with AI assistance (Claude Code): I directed the work and reviewed
+the results instead of writing every line myself.
+
+**The design decision I made: a static site that behaves like it has a backend.** The site had to
+stay a plain static site on GitHub Pages (no server to run or pay for), yet let people write C++ and
+have it judged like the real course grader. So the compiler runs inside the visitor's browser:
+clang and lld compiled to WebAssembly (the open-source [binji/wasm-clang](https://github.com/binji/wasm-clang)
+project) run in Web Workers, and every test run happens in a separate worker that is killed on timeout, so an
+infinite loop becomes a TLE verdict. The browser does the job a judging server would normally do. (No browser
+extension is involved; everything is WebAssembly in the page.)
+
+**Mine:** the product idea and requirements; the study flow (lesson → visualizer → quiz → graded problem);
+feature decisions (test-case score, redo marks and notes, the assigned-problem schedule, difficulty judged from the
+problem itself rather than only from submission counts); using the course grader's own test cases; manual testing
+and bug reports; publishing; and the code in `my-solutions/`, which is my own.
+
+**AI-assisted:** the React/TypeScript app, the in-browser C++ runner, the scripts that build test sets and
+cross-check reference solutions against brute force, the visualizers, and first drafts of the lesson and
+problem text, which I reviewed.
+
+Statements shown on problem pages are the course's original PDFs, and the test data comes from the course grader
+plus generated cases.
+
 ## ฟีเจอร์
 
 - **บทเรียนแบบโซน** — แนวคิด → ลองเล่น (visualizer) → เช็กความเข้าใจ → ความซับซ้อน → โจทย์แนะนำ
 - **10 บทเรียน** — ตั้งแต่ Brute Force ถึง NP-Complete แต่ละบทมีตัวจำลองของตัวเอง (permutation, sorting, Master Theorem, binary search, DP ตาราง, greedy, BFS/DFS/Kruskal, Dijkstra/Floyd, N-Queens, อัตราการโต)
-- **โจทย์ 63 ข้อ** — ทุกข้อเขียนและตรวจได้ในเบราว์เซอร์ รวมชุดข้อสอบปลายภาคเก่าปี 66–68
-- **หน้าความก้าวหน้า** — heat map การฝึก, streak, เลเวล/XP และเส้นทางแต่ละบท (เก็บในเบราว์เซอร์)
+- **โจทย์ 71 ข้อ** — ทุกข้อเขียนและตรวจได้ในเบราว์เซอร์ พร้อม PDF โจทย์ต้นฉบับ รวมชุดข้อสอบกลางภาค/ปลายภาคเก่า
+- **ความก้าวหน้า** — streak, เลเวล/XP และแถบ 7 วันบนหน้าแรก (เก็บในเบราว์เซอร์)
+- **ตารางทำโจทย์** — โจทย์ที่ได้รับมอบหมายตามวัน แยกคาบบ่าย/การบ้าน พร้อมคะแนนเทส และเครื่องหมายทำซ้ำ/โน้ต
 - **โซน LeetCode** — ข้อฝึกเพิ่มของแต่ละบท (ลิงก์เท่านั้น ไม่คัดลอกโจทย์) ติ๊กได้ว่าทำแล้ว
 - **ตัวตรวจโค้ดในเบราว์เซอร์** — เขียน C++17 แล้วตรวจกับชุดทดสอบได้ทันที แยกผล AC / WA / TLE / RE พร้อมบอกบรรทัดแรกที่ต่าง
 - **คำใบ้แบบขั้นบันได** — โผล่หลังตรวจไม่ผ่าน และเปิดทีละขั้นเมื่อผู้ใช้กดเอง
-- **หน้าแผน** — รวมทุกโจทย์ตามบท พร้อมสถานะ ยังไม่ทำ / ลองแล้ว / ผ่าน (เก็บในเบราว์เซอร์)
+- **หน้าโจทย์ทั้งหมด** — รวมทุกโจทย์ตามบท เรียงง่าย→ยาก ความยากประเมินจากตัวโจทย์ พร้อมสถานะ ยังไม่ทำ / ลองแล้ว / ผ่าน (เก็บในเบราว์เซอร์)
 
 ## การออกแบบระบบ
 

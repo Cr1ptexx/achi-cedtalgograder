@@ -31,6 +31,7 @@ export default function Layout() {
         </NavLink>
         <nav>
           <NavLink to="/" end>บทเรียน</NavLink>
+          <NavLink to="/assigned">ตารางทำโจทย์</NavLink>
           <NavLink to="/exam">เส้นทางสอบ</NavLink>
           <NavLink to="/plan">โจทย์ทั้งหมด</NavLink>
         </nav>
