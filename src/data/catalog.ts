@@ -12,11 +12,15 @@ export const catalog: CatalogEntry[] = [
   { code: 'ex00e4', title: 'Gen Barcode', graderId: 1585, chapter: 'brute-force', built: true },
   { code: 'a64_q1_permu_before', title: 'Permutation with Constraint', graderId: 1490, chapter: 'brute-force', built: true },
   { code: 'a65_q1_tower_defense', title: 'Tower Defense', graderId: 1487, chapter: 'brute-force', built: true },
+  { code: 'a66_q1a_day_cover', title: 'Day Cover', graderId: 1653, chapter: 'brute-force' },
 
   // Sorting
   { code: 'ex04m1_sort', title: '3 Values Sort', graderId: 1492, chapter: 'sorting', built: true },
   { code: 'a66_q2a_insertion_count', title: 'Insertion Sort Count', graderId: 1586, chapter: 'sorting' },
   { code: 'a65_q2a_huge_array', title: 'Huge Array', graderId: 1587, chapter: 'sorting' },
+  { code: 'da66_m1_line_monopoly', title: 'Line Monopoly', graderId: 1484, chapter: 'sorting' },
+  { code: 'da66_m1_line_paint', title: 'Line Paint', graderId: 2004, chapter: 'sorting' },
+  { code: 'da68_m2_interesting_events', title: 'Interesting Events', graderId: 1729, chapter: 'sorting' },
 
   // Recursion & analysis
   { code: 'ex00e5', title: 'Consecutive Ones', graderId: 1491, chapter: 'recursion' },
@@ -31,6 +35,8 @@ export const catalog: CatalogEntry[] = [
   { code: 'a62_q1b_virus', title: 'ตรวจจับไวรัส', graderId: 1493, chapter: 'divide-conquer' },
   { code: 'a63_q1b_virus2', title: 'Virus 2', graderId: 1594, chapter: 'divide-conquer' },
   { code: 'a64_q1_lawn_mowing', title: 'Lawn Mowing', graderId: 1498, chapter: 'divide-conquer' },
+  { code: 'da67_m_chocolate_truffle', title: 'Chocolate Truffle', graderId: 1589, chapter: 'divide-conquer' },
+  { code: 'da68_f2_remaining_merge', title: 'Remaining Merge', graderId: 1733, chapter: 'divide-conquer' },
 
   // Dynamic programming
   { code: 'ex02e1_fibo', title: 'Fibonacci Number', graderId: 1502, chapter: 'dp' },
@@ -49,6 +55,7 @@ export const catalog: CatalogEntry[] = [
   { code: 'a58_m_p4', title: 'Interval Selection (a58)', graderId: 1519, chapter: 'greedy' },
   { code: 'ex04e2_fknapsack', title: 'Fractional Knapsack', graderId: 1516, chapter: 'greedy' },
   { code: 'a60b_mid_p1_buffet', title: 'Buffet', graderId: 1515, chapter: 'greedy' },
+  { code: 'da67_m2_dungeon', title: 'Welcome to the dungeon', graderId: 1628, chapter: 'greedy' },
 
   // Graph
   { code: 'a65_q0_degrees', title: 'Degree in Graph', graderId: 1595, chapter: 'graph' },
@@ -71,6 +78,7 @@ export const catalog: CatalogEntry[] = [
   { code: 'ex06e1_cable', title: 'Cable Company (MST)', graderId: 1514, chapter: 'shortest-path' },
   { code: 'a60a_q3_xor_road', title: 'XOR Road (MST)', graderId: 1517, chapter: 'shortest-path' },
   { code: 'da68_f_internet_provider', title: 'Internet Provider (MST)', graderId: 1664, chapter: 'shortest-path' },
+  { code: 'da68_f2_closed_city', title: 'เมืองปิด', graderId: 1734, chapter: 'shortest-path' },
 
   // Search (backtracking / branch & bound)
   { code: 'ex07e1_nqueen', title: 'N Queen', graderId: 1485, chapter: 'search' },

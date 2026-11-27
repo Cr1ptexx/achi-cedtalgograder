@@ -8,6 +8,7 @@ import { graphProblems } from './problem-sets/graph';
 import { shortestPathProblems } from './problem-sets/shortest-path';
 import { searchProblems } from './problem-sets/search';
 import { examProblems } from './problem-sets/exam';
+import { moreProblems } from './problem-sets/more';
 
 // Statements are short paraphrases of the grader PDFs, written in our own words.
 // Full test sets live in public/tests/<code>.json (built by scripts/build-tests.mjs).
@@ -209,6 +210,7 @@ export const problems: Problem[] = [
   ...shortestPathProblems,
   ...searchProblems,
   ...examProblems,
+  ...moreProblems,
 ];
 
 export const problemByCode = new Map(problems.map((p) => [p.code, p]));

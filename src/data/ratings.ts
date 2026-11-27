@@ -28,6 +28,14 @@ const STATS: Record<string, [number, number]> = {
   da66_f1_map_walk: [2491, 654], da66_f1_sea_bridge: [2022, 387], da66_f2_grid_loop: [619, 151],
   da66_f2_new_game_plus: [979, 191], da67_f_border_extend: [1743, 347], da67_f_one_two_apart: [2075, 333],
   da67_f_travelling_tourist: [1368, 264], da68_f_game_of_trades: [913, 128],
+  da66_m1_line_monopoly: [3872, 610],
+  da66_m1_line_paint: [20, 11],
+  da68_m2_interesting_events: [535, 74],
+  a66_q1a_day_cover: [1213, 212],
+  da67_m2_dungeon: [1112, 215],
+  da67_m_chocolate_truffle: [3030, 375],
+  da68_f2_remaining_merge: [164, 25],
+  da68_f2_closed_city: [239, 37],
 };
 
 export type Level = 1 | 2 | 3;
@@ -46,7 +54,12 @@ export type Rating = {
 const SMALL_SAMPLE = 60;
 
 function source(code: string): { label: string; score: number } {
-  let m = code.match(/^da(\d\d)_f/);
+  let m = code.match(/^da(\d\d)_m/);
+  if (m) {
+    const y = +m[1];
+    return { label: `ข้อสอบกลางภาค ปี ${y}`, score: y >= 68 ? 2.6 : y === 67 ? 2.2 : 1.8 };
+  }
+  m = code.match(/^da(\d\d)_f/);
   if (m) {
     const y = +m[1];
     return { label: `ข้อสอบปลายภาค ปี ${y}`, score: y >= 68 ? 3 : y === 67 ? 2.6 : 2.2 };
