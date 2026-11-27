@@ -20,10 +20,12 @@ export default function AssignedPage() {
   const [filter, setFilter] = useState<Filter>('all');
 
   const solved = (it: AssignedItem) => getStatus(it.code) === 'solved';
-  const total = ASSIGNED.length;
-  const done = ASSIGNED.filter(solved).length;
+  // a problem can appear on two dates (e.g. homework, then the final practice set): count it once
+  const codes = [...new Set(ASSIGNED.map((i) => i.code))];
+  const total = codes.length;
+  const done = codes.filter((c) => getStatus(c) === 'solved').length;
   const byKind = (k: AssignedKind) => ({ done: ASSIGNED.filter((i) => i.kind === k && solved(i)).length, all: ASSIGNED.filter((i) => i.kind === k).length });
-  const cls = byKind('class'), home = byKind('home');
+  const cls = byKind('class'), home = byKind('home'), practice = byKind('practice');
 
   // next problem to do: oldest unfinished day first, easiest first inside the day
   const open = ASSIGNED.filter((i) => !solved(i));
@@ -43,13 +45,13 @@ export default function AssignedPage() {
           <div className="as-count"><b>{done}</b><span>/ {total} ข้อผ่านแล้ว</span></div>
           <div className="grow">
             <div className="progress big"><div style={{ width: `${(done / total) * 100}%` }} /></div>
-            <div className="small muted">คาบบ่าย {cls.done}/{cls.all} · การบ้าน {home.done}/{home.all}</div>
+            <div className="small muted">คาบบ่าย {cls.done}/{cls.all} · การบ้าน {home.done}/{home.all} · ซ้อมสอบ {practice.done}/{practice.all}</div>
           </div>
           {next ? <Link className="btn primary" to={`/p/${next.code}`}>ข้อถัดไป: {titleOf.get(next.code)}</Link> : <span className="pill ok">ครบทุกข้อแล้ว</span>}
         </div>
 
         <div className="seg" role="group" aria-label="กรองรายการ">
-          {([['all', 'ทั้งหมด'], ['todo', 'ยังไม่ผ่าน'], ['class', 'คาบบ่าย'], ['home', 'การบ้าน']] as const).map(([k, label]) => (
+          {([['all', 'ทั้งหมด'], ['todo', 'ยังไม่ผ่าน'], ['class', 'คาบบ่าย'], ['home', 'การบ้าน'], ['practice', 'ซ้อมสอบ']] as const).map(([k, label]) => (
             <button key={k} className={filter === k ? 'on' : ''} onClick={() => setFilter(k)}>{label}</button>
           ))}
         </div>
@@ -78,7 +80,7 @@ export default function AssignedPage() {
                 </div>
                 <span className={`as-tag ${tag.c}`}>{tag.t}</span>
               </div>
-              {(['class', 'home'] as const).map((k) => {
+              {(['class', 'home', 'practice'] as const).map((k) => {
                 const rows = shown.filter((i) => i.kind === k);
                 if (!rows.length) return null;
                 return (
@@ -104,7 +106,7 @@ export default function AssignedPage() {
         })}
       </div>
 
-      <p className="small muted">ตารางนี้คัดจากตารางที่ได้รับมอบหมาย (เริ่มวันที่ 23 พ.ย.) ถ้ามีวันอื่นเพิ่ม แก้ที่ <code>src/data/assigned.ts</code></p>
+      <p className="small muted">ตารางนี้คัดจากตารางที่ได้รับมอบหมาย (เฉพาะโจทย์ algorithm) ถ้ามีวันอื่นเพิ่ม แก้ที่ <code>src/data/assigned.ts</code></p>
     </>
   );
 }
