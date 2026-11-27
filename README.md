@@ -33,6 +33,7 @@ judged in the browser against the course grader's own test cases, with no server
 | **Real verdicts** | AC / WA / TLE / RE per test, the first differing line, a best-score column and private "redo" notes |
 | **Difficulty from the problem** | every problem rated easy / medium / hard by what it actually asks for (technique, key insight, traps), with a one-line reason |
 | **Course schedule page** | the assigned problems by date (in-class, homework, exam practice), with progress and a "next problem" button |
+| **Exam readiness** | timed mock grader exam, a review page for failed / redo problems and wrong quiz answers, JSON backup and restore, offline cache |
 | **Extra practice** | 52 hand-picked LeetCode problems, one zone per chapter (links only) |
 
 Progress, saved code, scores and notes stay in the browser (localStorage). Nothing is sent anywhere.

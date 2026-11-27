@@ -48,11 +48,11 @@ export function streaks(days: Set<string>, now = new Date()): { current: number;
 export const XP_PER_LEVEL = 100;
 export const levelOf = (xp: number) => Math.floor(xp / XP_PER_LEVEL) + 1;
 export function rankName(level: number): string {
-  if (level < 3) return 'ผู้เริ่มต้น';
-  if (level < 6) return 'นักลองผิดลองถูก';
-  if (level < 10) return 'นักแก้โจทย์';
-  if (level < 14) return 'นักออกแบบอัลกอริทึม';
-  return 'ปรมาจารย์';
+  if (level < 3) return 'Beginner';
+  if (level < 6) return 'Intermediate';
+  if (level < 10) return 'Advanced';
+  if (level < 14) return 'Expert';
+  return 'Master';
 }
 
 // ---------- one-shot summary used by the home page ----------

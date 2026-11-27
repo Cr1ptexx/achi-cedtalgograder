@@ -33,6 +33,8 @@ export default function Layout() {
           <NavLink to="/" end>บทเรียน</NavLink>
           <NavLink to="/assigned">ตารางทำโจทย์</NavLink>
           <NavLink to="/exam">เส้นทางสอบ</NavLink>
+          <NavLink to="/mock">จำลองสอบ</NavLink>
+          <NavLink to="/review">ทบทวน</NavLink>
           <NavLink to="/plan">โจทย์ทั้งหมด</NavLink>
         </nav>
         <button className="theme-toggle" onClick={toggle} aria-label={theme === 'dark' ? 'เปลี่ยนเป็นธีมสว่าง' : 'เปลี่ยนเป็นธีมมืด'} title="สลับธีม">

@@ -5,7 +5,8 @@ import { summary } from '../store/stats';
 import { rankName, XP_PER_LEVEL } from '../store/stats';
 import WeekStrip from '../components/WeekStrip';
 import { getStatus, useProgressVersion } from '../store/progress';
-import ExamCard from '../components/ExamCard';
+import ExamCountdown from '../components/ExamCountdown';
+import XpBar from '../components/XpBar';
 
 export default function Home() {
   useProgressVersion();
@@ -15,27 +16,38 @@ export default function Home() {
   return (
     <>
       <section className="hero">
+        <div className="hero-kicker"><span className="dot-live" aria-hidden="true" />algorithms · visualized · judged in your browser</div>
         <h1>Algo Lab</h1>
-        <p>เว็บฝึกวิชา Algorithm สรุปแนวคิดทีละบท มีตัวจำลองให้กดดู และโจทย์ C++ ที่เขียนกับตรวจได้ในหน้าเว็บ</p>
+        <p>สรุปแนวคิดทีละบท กดดูอัลกอริทึมทำงานทีละขั้น แล้วเขียน C++ ส่งตรวจได้ในหน้าเว็บ</p>
 
         <div className="hero-board">
-          <div className="hero-tickets">
-            <ExamCard id="grader" />
-            <ExamCard id="paper" />
+          <div className="hero-exams">
+            <ExamCountdown id="grader" />
+            <ExamCountdown id="paper" />
           </div>
           <div className="card hero-progress">
-            <div className="hero-count"><b>{solved}</b><span>จาก {total} ข้อผ่านแล้ว</span></div>
-            <div className="lvl-line">
-              <div className="lvl-line-h"><b>เลเวล {level}</b> <span className="muted small">{rankName(level)} · {xp} XP</span></div>
-              <div className="progress" role="progressbar" aria-valuenow={into} aria-valuemin={0} aria-valuemax={XP_PER_LEVEL} aria-label="ไปเลเวลถัดไป"><div style={{ width: `${into}%` }} /></div>
+            <div className="hp-top">
+              <div className="hp-solved"><b>{solved}</b><span>/ {total}</span><em>solved</em></div>
+              <div className="hp-level">
+                <span className="lv-badge">LV {level}</span>
+                <span className="lv-rank">{rankName(level)}</span>
+              </div>
+            </div>
+            <div className="hp-xp">
+              <XpBar value={into} max={XP_PER_LEVEL} label="ไปเลเวลถัดไป" />
+              <div className="hp-xp-meta"><span>{xp} XP</span><span>{XP_PER_LEVEL - into} XP to LV {level + 1}</span></div>
             </div>
             <div className="wk-row">
               <WeekStrip week={week} />
-              <span className="small muted">{streak > 0 ? `ฝึกต่อเนื่อง ${streak} วัน` : 'ยังไม่ได้ฝึกวันนี้'}</span>
+              <span className="small muted">{streak > 0 ? `streak ${streak} วัน` : 'ยังไม่ได้ฝึกวันนี้'}</span>
             </div>
-            <div className="small muted">ลองแล้ว {tried} ข้อ · ยังไม่ทำ {total - solved - tried} ข้อ · LeetCode {lcDone}/{lcTotal}</div>
-            <Link className="btn primary" to={`/ch/${next.slug}`}>
-              {solved > 0 ? `เรียนต่อ: บท ${next.num} ${next.title}` : 'เริ่มบทแรก'}
+            <dl className="hp-stats">
+              <div><dt>ลองแล้ว</dt><dd>{tried}</dd></div>
+              <div><dt>ยังไม่ทำ</dt><dd>{total - solved - tried}</dd></div>
+              <div><dt>LeetCode</dt><dd>{lcDone}/{lcTotal}</dd></div>
+            </dl>
+            <Link className="btn primary hp-cta" to={`/ch/${next.slug}`}>
+              {solved > 0 ? `เรียนต่อ: บท ${next.num} ${next.title}` : 'เริ่มบทแรก'} <span aria-hidden="true">→</span>
             </Link>
           </div>
         </div>

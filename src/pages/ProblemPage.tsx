@@ -7,7 +7,7 @@ import { chapterBySlug } from '../data/chapters';
 import { catalog, GRADER_BASE } from '../data/catalog';
 import { runner, type Checker, type TestCase, type TestResult } from '../runner/cppRunner';
 import type { TestFile } from '../data/types';
-import { loadCode, markResult, saveCode } from '../store/progress';
+import { getMock, getStatus, loadCode, markResult, mockActive, recordMock, saveCode } from '../store/progress';
 import { DifficultyBadge, WorthStars } from '../components/Difficulty';
 import ReviewBox from '../components/ReviewBox';
 import { ratingOf } from '../data/ratings';
@@ -32,6 +32,7 @@ export default function ProblemPage() {
   const p = problemByCode.get(code);
   const [src, setSrc] = useState('');
   const [phase, setPhase] = useState<Phase>('idle');
+  const [xpToast, setXpToast] = useState<number | null>(null);
   const [compilerReady, setCompilerReady] = useState(false);
   const [compilerError, setCompilerError] = useState<string | null>(null);
   const [log, setLog] = useState('');
@@ -74,6 +75,7 @@ export default function ProblemPage() {
     return c;
   }, [testFile]);
 
+  const inMock = mockActive(getMock()) && !!getMock()?.codes.includes(code);
   const busy = phase === 'loading' || phase === 'compiling' || phase === 'running';
 
   async function run(tests: TestCase[], isSubmit: boolean) {
@@ -83,14 +85,15 @@ export default function ProblemPage() {
     setPhase(compilerReady ? 'compiling' : 'loading');
     try {
       const c = await runner.compile(src);
-      if (!c.ok) { setLog(c.log); setPhase('ce'); setFailedOnce(true); if (isSubmit) markResult(p.code, false, 0, tests.length); return; }
+      if (!c.ok) { setLog(c.log); setPhase('ce'); setFailedOnce(true); if (isSubmit) { markResult(p.code, false, 0, tests.length); recordMock(p.code, 0, tests.length); } return; }
       setLog(c.log);
       setPhase('running');
       const rs = await runner.runTests(c.wasm, tests, (r) => setResults((prev) => [...prev, r]), p.timeLimitMs, checker, validator);
       setPhase('done');
       const allOk = rs.every((r) => r.verdict === 'AC');
       if (!allOk) setFailedOnce(true);
-      if (isSubmit) markResult(p.code, allOk, rs.filter((r) => r.verdict === 'AC').length, rs.length);
+      if (isSubmit && allOk && getStatus(p.code) !== 'solved') { setXpToast(10 * (ratingOf(p.code)?.level ?? 1)); setTimeout(() => setXpToast(null), 2200); }
+      if (isSubmit) { const ok = rs.filter((r) => r.verdict === 'AC').length; markResult(p.code, allOk, ok, rs.length); recordMock(p.code, ok, rs.length); }
       const firstBad = rs.find((r) => r.verdict !== 'AC');
       if (firstBad) setOpen(firstBad.index);
     } catch (e) {
@@ -162,6 +165,7 @@ export default function ProblemPage() {
           <a className="small" href={`${GRADER_BASE}/main/list`} target="_blank" rel="noreferrer">เปิดบน grader ↗</a>
           {nextProb && <Link className="small" to={`/p/${nextProb.code}`}>ข้อถัดไป: {nextProb.title} →</Link>}
         </div>
+        {inMock && <div className="notice">โหมดจำลองสอบ: ปิดคำใบ้ · <Link to="/mock">กลับไปดูเวลาและรายการข้อ</Link></div>}
         <RatingLine code={p.code} />
 
         <div className="seg stmt-tabs" role="tablist" aria-label="รูปแบบโจทย์">
@@ -214,7 +218,7 @@ export default function ProblemPage() {
           {checker === 'float' &&' และยอมให้ทศนิยมคลาดเคลื่อนได้ 0.0001 (หรือ 0.00001% ถ้าตัวเลขใหญ่)'}
         </p>
 
-        {failedOnce && (
+        {failedOnce && !inMock && (
           <div className="hint-box">
             {p.hints.length === 0 ? (
               <p className="muted small">ข้อนี้ยังไม่มีคำใบ้</p>
@@ -255,7 +259,7 @@ export default function ProblemPage() {
             title={`${MOD}+Enter`}>
             {tab === 'custom' ? 'รันด้วย input นี้' : 'รันตัวอย่าง'} <span className="kbd">{MOD}+Enter</span>
           </button>
-          <button className="btn primary" disabled={busy || !testFile} onClick={() => testFile && run(testFile.tests, true)}
+          <button className={`btn primary submit-btn ${busy ? 'busy' : ''}`} disabled={busy || !testFile} onClick={() => testFile && run(testFile.tests, true)}
             title={`${MOD}+Shift+Enter`}>
             ส่งตรวจทุกชุด <span className="kbd">{MOD}+⇧+Enter</span>
           </button>
@@ -290,6 +294,7 @@ export default function ProblemPage() {
                 {phase === 'ce' && (<><div className="verdict-banner bad">คอมไพล์ไม่ผ่าน — ดูบรรทัดที่ error ด้านล่าง</div><pre className="io log">{log}</pre></>)}
                 {(phase === 'running' || phase === 'done') && (
                   <>
+                    {xpToast !== null && <div className="xp-toast" role="status">+{xpToast} XP</div>}
                     <div className={`verdict-banner ${allPassed ? 'good' : phase === 'done' ? 'bad' : ''}`}>
                       {phase === 'running' ? `กำลังตรวจ ${results.length}/${runSet.length}` : allPassed ? `ผ่านทั้งหมด ${passed}/${runSet.length}` : `ผ่าน ${passed} จาก ${runSet.length} ชุด — กดที่ชุดสีแดงเพื่อดูว่าต่างตรงไหน`}
                     </div>

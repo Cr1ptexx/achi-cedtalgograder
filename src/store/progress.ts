@@ -95,3 +95,57 @@ export function getRedo(code: string): boolean { return read(`redo:${code}`) ===
 export function setRedo(code: string, on: boolean) { write(`redo:${code}`, on ? '1' : '0'); }
 export function getNote(code: string): string { return read(`note:${code}`) ?? ''; }
 export function setNote(code: string, text: string) { write(`note:${code}`, text); }
+
+// ---------- backup: export / import everything this site keeps in the browser ----------
+const BACKUP_MAGIC = 'algo-lab-backup';
+
+export function exportProgress(): string {
+  const data: Record<string, string> = {};
+  try {
+    for (let i = 0; i < localStorage.length; i++) {
+      const k = localStorage.key(i);
+      if (k && k.startsWith(PREFIX)) data[k.slice(PREFIX.length)] = localStorage.getItem(k) ?? '';
+    }
+  } catch { /* ignore */ }
+  return JSON.stringify({ app: BACKUP_MAGIC, version: 1, exportedAt: new Date().toISOString(), data }, null, 1);
+}
+
+/** Replaces all saved progress with the backup. Returns the number of keys restored, or throws on a bad file. */
+export function importProgress(text: string): number {
+  let obj: unknown;
+  try { obj = JSON.parse(text); } catch { throw new Error('ไฟล์นี้ไม่ใช่ JSON'); }
+  const o = obj as { app?: string; data?: Record<string, unknown> };
+  if (!o || o.app !== BACKUP_MAGIC || typeof o.data !== 'object' || o.data === null) throw new Error('ไม่ใช่ไฟล์สำรองของ Algo Lab');
+  const entries = Object.entries(o.data).filter(([, v]) => typeof v === 'string') as [string, string][];
+  try {
+    const old: string[] = [];
+    for (let i = 0; i < localStorage.length; i++) { const k = localStorage.key(i); if (k && k.startsWith(PREFIX)) old.push(k); }
+    old.forEach((k) => localStorage.removeItem(k));
+    entries.forEach(([k, v]) => localStorage.setItem(PREFIX + k, v));
+  } catch { throw new Error('เขียนข้อมูลลงเบราว์เซอร์ไม่ได้'); }
+  version++;
+  listeners.forEach((l) => l());
+  return entries.length;
+}
+
+// ---------- mock exam session ----------
+export type MockSession = { codes: string[]; start: number; durationMs: number; results: Record<string, [number, number]>; ended?: boolean };
+export function getMock(): MockSession | null {
+  try {
+    const v = JSON.parse(read('mock') ?? 'null');
+    return v && Array.isArray(v.codes) ? (v as MockSession) : null;
+  } catch { return null; }
+}
+export function setMock(m: MockSession | null) { write('mock', m ? JSON.stringify(m) : 'null'); }
+/** True while a session exists, is not ended, and time is left. */
+export function mockActive(m = getMock()): m is MockSession {
+  return !!m && !m.ended && Date.now() < m.start + m.durationMs;
+}
+/** Keep the best result per problem during the session (only while it is running). */
+export function recordMock(code: string, passed: number, total: number) {
+  const m = getMock();
+  if (!mockActive(m) || !m.codes.includes(code)) return;
+  const cur = m.results[code];
+  if (!cur || passed / total > cur[0] / cur[1]) m.results[code] = [passed, total];
+  setMock(m);
+}
